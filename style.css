@@ -75,10 +75,6 @@ h1 {
     color: #333;
 }
 
-.stat-value.penalty {
-    color: #ff4444;
-}
-
 .progress-bar-container {
     width: 100%;
     height: 10px;
@@ -225,16 +221,6 @@ h1 {
     }
 }
 
-.alarm-item.penalty {
-    background: #ffebee;
-    border-left-color: #ff4444;
-}
-
-.alarm-item.warning {
-    background: #fff3e0;
-    border-left-color: #ff9800;
-}
-
 .alarm-item.completed {
     background: #e8f5e8;
     border-left-color: #4caf50;
@@ -243,6 +229,18 @@ h1 {
 .alarm-item.active {
     background: #e3f2fd;
     border-left-color: #2196f3;
+}
+
+.alarm-item.reminder {
+    background: #fff8e1;
+    border-left-color: #ffc107;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
 }
 
 .alarm-info {
@@ -262,9 +260,9 @@ h1 {
     margin-top: 3px;
 }
 
-.penalty-badge {
+.completed-badge {
     display: inline-block;
-    background: #ff4444;
+    background: #4caf50;
     color: white;
     padding: 2px 8px;
     border-radius: 12px;
@@ -272,14 +270,27 @@ h1 {
     margin-top: 5px;
 }
 
-.warning-badge {
+.reminder-badge {
     display: inline-block;
-    background: #ff9800;
-    color: white;
+    background: #ffc107;
+    color: #333;
     padding: 2px 8px;
     border-radius: 12px;
     font-size: 10px;
     margin-top: 5px;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.timer-countdown {
+    font-weight: bold;
+    color: #ff9800;
+    font-size: 11px;
 }
 
 .alarm-actions {
@@ -308,11 +319,6 @@ h1 {
 .btn-complete {
     background: #4ecdc4;
     color: white;
-}
-
-.btn-snooze {
-    background: #ffd93d;
-    color: #333;
 }
 
 /* Modal */
