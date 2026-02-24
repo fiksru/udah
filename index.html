@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Alarm Kegiatan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⏰ Alarm Kegiatan Harian</h1>
+        
+        <!-- 4 Button Kegiatan -->
+        <div class="button-grid">
+            <button class="activity-btn makan" onclick="showAlarmModal('Makan')">
+                🍚 Makan
+                <span>Atur alarm makan</span>
+            </button>
+            <button class="activity-btn belajar" onclick="showAlarmModal('Belajar')">
+                📚 Belajar
+                <span>Atur alarm belajar</span>
+            </button>
+            <button class="activity-btn tidur" onclick="showAlarmModal('Tidur')">
+                😴 Tidur
+                <span>Atur alarm tidur</span>
+            </button>
+            <button class="activity-btn kebugaran" onclick="showAlarmModal('Kebugaran')">
+                💪 Kebugaran
+                <span>Atur alarm olahraga</span>
+            </button>
+        </div>
+
+        <!-- Bagian Daftar Alarm -->
+        <div class="alarm-section">
+            <div class="alarm-header">
+                <h3>📋 Daftar Alarm Aktif</h3>
+                <button class="btn-secondary" onclick="showAlarmModal()">+ Tambah Manual</button>
+            </div>
+            
+            <ul class="alarm-list" id="alarmList">
+                <!-- Alarm akan ditampilkan di sini -->
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal untuk Input Alarm -->
+    <div class="modal" id="alarmModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Atur Alarm Baru</h2>
+            
+            <div class="form-group">
+                <label for="activityType">Jenis Kegiatan</label>
+                <select id="activityType">
+                    <option value="Makan">🍚 Makan</option>
+                    <option value="Belajar">📚 Belajar</option>
+                    <option value="Tidur">😴 Tidur</option>
+                    <option value="Kebugaran">💪 Kebugaran</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="alarmTime">Waktu Alarm</label>
+                <input type="datetime-local" id="alarmTime" required>
+            </div>
+
+            <div class="form-group">
+                <label for="alarmNote">Catatan (Opsional)</label>
+                <input type="text" id="alarmNote" placeholder="Contoh: Sarapan pagi...">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeModal()">Batal</button>
+                <button class="btn-primary" onclick="saveAlarm()">Simpan Alarm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
