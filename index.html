@@ -3,107 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Alarm Kegiatan</title>
+    <title>Aplikasi Alarm Kegiatan Harian</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>⏰ Alarm Kegiatan Harian</h1>
-        
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⏰ Alarm Kegiatan Harian</h1>
+            <p class="subtitle">Atur pengingat untuk kegiatan sehari-hari Anda</p>
+        </div>
+
         <!-- Progress Section -->
         <div class="progress-section">
-            <h3>📊 Progress Hari Ini</h3>
-            <div class="stats-container">
+            <div class="section-title">
+                <h2>📊 Progress Hari Ini</h2>
+            </div>
+            
+            <div class="stats-grid">
                 <div class="stat-card">
-                    <span class="stat-label">Total</span>
-                    <span class="stat-value" id="totalTasks">0</span>
+                    <div class="stat-icon">📋</div>
+                    <div class="stat-detail">
+                        <span class="stat-label">Total Kegiatan</span>
+                        <span class="stat-value" id="totalTasks">0</span>
+                    </div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Selesai</span>
-                    <span class="stat-value" id="completedTasks">0</span>
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-detail">
+                        <span class="stat-label">Selesai</span>
+                        <span class="stat-value success" id="completedTasks">0</span>
+                    </div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Pending</span>
-                    <span class="stat-value" id="pendingTasks">0</span>
+                    <div class="stat-icon">⏳</div>
+                    <div class="stat-detail">
+                        <span class="stat-label">Pending</span>
+                        <span class="stat-value warning" id="pendingTasks">0</span>
+                    </div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Progress</span>
-                    <span class="stat-value" id="progressPercentage">0%</span>
+                    <div class="stat-icon">📈</div>
+                    <div class="stat-detail">
+                        <span class="stat-label">Progress</span>
+                        <span class="stat-value" id="progressPercentage">0%</span>
+                    </div>
                 </div>
             </div>
+            
             <div class="progress-bar-container">
                 <div class="progress-bar" id="progressBar" style="width: 0%"></div>
             </div>
         </div>
 
-        <!-- 4 Button Kegiatan -->
-        <div class="button-grid">
-            <button class="activity-btn makan" onclick="showAlarmModal('Makan')">
-                🍚 Makan
-                <span>Atur alarm makan</span>
-            </button>
-            <button class="activity-btn belajar" onclick="showAlarmModal('Belajar')">
-                📚 Belajar
-                <span>Atur alarm belajar</span>
-            </button>
-            <button class="activity-btn tidur" onclick="showAlarmModal('Tidur')">
-                😴 Tidur
-                <span>Atur alarm tidur</span>
-            </button>
-            <button class="activity-btn kebugaran" onclick="showAlarmModal('Kebugaran')">
-                💪 Kebugaran
-                <span>Atur alarm olahraga</span>
-            </button>
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="section-title">
+                <h2>⚡ Quick Actions</h2>
+            </div>
+            <div class="button-grid">
+                <button class="activity-card makan" onclick="showAlarmModal('Makan')">
+                    <div class="activity-icon">🍚</div>
+                    <div class="activity-info">
+                        <h3>Makan</h3>
+                        <span>Atur alarm makan</span>
+                    </div>
+                </button>
+                <button class="activity-card belajar" onclick="showAlarmModal('Belajar')">
+                    <div class="activity-icon">📚</div>
+                    <div class="activity-info">
+                        <h3>Belajar</h3>
+                        <span>Atur alarm belajar</span>
+                    </div>
+                </button>
+                <button class="activity-card tidur" onclick="showAlarmModal('Tidur')">
+                    <div class="activity-icon">😴</div>
+                    <div class="activity-info">
+                        <h3>Tidur</h3>
+                        <span>Atur alarm tidur</span>
+                    </div>
+                </button>
+                <button class="activity-card kebugaran" onclick="showAlarmModal('Kebugaran')">
+                    <div class="activity-icon">💪</div>
+                    <div class="activity-info">
+                        <h3>Kebugaran</h3>
+                        <span>Atur alarm olahraga</span>
+                    </div>
+                </button>
+            </div>
         </div>
 
-        <!-- Bagian Daftar Alarm -->
+        <!-- Alarm List Section -->
         <div class="alarm-section">
-            <div class="alarm-header">
-                <h3>📋 Daftar Alarm Aktif</h3>
-                <div>
-                    <button class="btn-secondary" onclick="showAlarmModal()">+ Tambah Manual</button>
+            <div class="section-header">
+                <div class="section-title">
+                    <h2>📋 Daftar Alarm</h2>
+                </div>
+                <div class="header-actions">
+                    <button class="btn-secondary" onclick="showAlarmModal()">
+                        <span>+</span> Tambah Manual
+                    </button>
                 </div>
             </div>
             
             <!-- Filter Buttons -->
-            <div class="filter-buttons">
-                <button class="filter-btn active" onclick="filterAlarms('all')" id="filterAll">Semua</button>
-                <button class="filter-btn" onclick="filterAlarms('pending')" id="filterPending">Pending</button>
-                <button class="filter-btn" onclick="filterAlarms('completed')" id="filterCompleted">Selesai</button>
+            <div class="filter-section">
+                <button class="filter-btn active" onclick="filterAlarms('all')" id="filterAll">
+                    Semua <span class="filter-count" id="countAll">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterAlarms('pending')" id="filterPending">
+                    Pending <span class="filter-count" id="countPending">0</span>
+                </button>
+                <button class="filter-btn" onclick="filterAlarms('completed')" id="filterCompleted">
+                    Selesai <span class="filter-count" id="countCompleted">0</span>
+                </button>
             </div>
             
-            <ul class="alarm-list" id="alarmList">
-                <!-- Alarm akan ditampilkan di sini -->
-            </ul>
+            <!-- Alarm List -->
+            <div class="alarm-list-container">
+                <ul class="alarm-list" id="alarmList">
+                    <!-- Alarm akan ditampilkan di sini -->
+                </ul>
+            </div>
+
+            <!-- Auto Alarm Button -->
+            <button class="btn-auto" onclick="createAutoAlarm()">
+                <span>🤖</span> Buat Alarm Otomatis (4 Kegiatan)
+            </button>
         </div>
     </div>
 
     <!-- Modal untuk Input Alarm -->
     <div class="modal" id="alarmModal">
         <div class="modal-content">
-            <h2 id="modalTitle">Atur Alarm Baru</h2>
+            <div class="modal-header">
+                <h2 id="modalTitle">Atur Alarm Baru</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
             
-            <div class="form-group">
-                <label for="activityType">Jenis Kegiatan</label>
-                <select id="activityType">
-                    <option value="Makan">🍚 Makan</option>
-                    <option value="Belajar">📚 Belajar</option>
-                    <option value="Tidur">😴 Tidur</option>
-                    <option value="Kebugaran">💪 Kebugaran</option>
-                </select>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="activityType">Jenis Kegiatan</label>
+                    <select id="activityType" class="form-control">
+                        <option value="Makan">🍚 Makan</option>
+                        <option value="Belajar">📚 Belajar</option>
+                        <option value="Tidur">😴 Tidur</option>
+                        <option value="Kebugaran">💪 Kebugaran</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="alarmTime">Waktu Alarm</label>
+                    <input type="datetime-local" id="alarmTime" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="alarmNote">Catatan (Opsional)</label>
+                    <input type="text" id="alarmNote" class="form-control" placeholder="Contoh: Sarapan pagi...">
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="alarmTime">Waktu Alarm</label>
-                <input type="datetime-local" id="alarmTime" required>
-            </div>
-
-            <div class="form-group">
-                <label for="alarmNote">Catatan (Opsional)</label>
-                <input type="text" id="alarmNote" placeholder="Contoh: Sarapan pagi...">
-            </div>
-
-            <div class="modal-actions">
+            <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeModal()">Batal</button>
                 <button class="btn-primary" onclick="saveAlarm()">Simpan Alarm</button>
             </div>
@@ -113,10 +173,20 @@
     <!-- Modal Konfirmasi Kegiatan -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
-            <h2>⏰ Konfirmasi Kegiatan</h2>
-            <p id="confirmMessage">Apakah Anda sudah menyelesaikan kegiatan ini?</p>
-            <p id="confirmTimer" style="color: #ff9800; font-weight: bold;">Sisa waktu: 1:00</p>
-            <div class="modal-actions">
+            <div class="modal-header">
+                <h2>⏰ Konfirmasi Kegiatan</h2>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <p class="confirm-message" id="confirmMessage">Apakah Anda sudah menyelesaikan kegiatan ini?</p>
+                <div class="timer-container">
+                    <span class="timer-label">Sisa waktu konfirmasi:</span>
+                    <span class="timer-value" id="confirmTimer">1:00</span>
+                </div>
+            </div>
+
+            <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeConfirmModal()">Tutup</button>
                 <button class="btn-primary" onclick="confirmComplete()">Ya, Selesai</button>
             </div>
