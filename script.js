@@ -5,6 +5,7 @@ let audioContext = null;
 let checkerInterval = null;
 let activeAlarmSounds = {}; // Untuk menyimpan audio yang sedang aktif
 let confirmModalTimer = null; // Timer untuk modal konfirmasi
+let confirmReminderInterval = null; // Interval notifikasi periodik saat reminder
 let currentConfirmAlarm = null; // Alarm yang sedang dikonfirmasi
 
 // Inisialisasi saat halaman dimuat
@@ -178,10 +179,21 @@ function saveAlarm() {
     };
 
     alarms.push(alarm);
+    
+    // Simpan ke localStorage
     saveToLocalStorage();
+    
+    // Update tampilan
     renderAlarms();
     updateProgress();
-    closeModal();
+    
+    // Tutup modal (pastikan tidak ada error)
+    try {
+        closeModal();
+    } catch (e) {
+        console.error('Gagal menutup modal:', e);
+    }
+    
     showNotification('Alarm berhasil ditambahkan!');
 }
 
@@ -220,7 +232,7 @@ function completeAlarm(id) {
     }
 }
 
-// Menampilkan modal konfirmasi
+// Menampilkan modal konfirmasi dengan notifikasi periodik
 function showConfirmModal(alarm) {
     // Tutup modal sebelumnya jika ada
     closeConfirmModal();
@@ -237,6 +249,19 @@ function showConfirmModal(alarm) {
     alarm.reminderActive = true;
     alarm.reminderEndTime = new Date(endTime).toISOString();
     
+    // Kirim notifikasi pertama
+    sendReminderNotification(alarm);
+    
+    // Interval notifikasi periodik setiap 15 detik selama reminder
+    confirmReminderInterval = setInterval(() => {
+        if (currentConfirmAlarm && currentConfirmAlarm.id === alarm.id && !alarm.completed) {
+            sendReminderNotification(alarm);
+        } else {
+            clearInterval(confirmReminderInterval);
+            confirmReminderInterval = null;
+        }
+    }, 15000); // 15 detik
+    
     // Update timer setiap detik
     confirmModalTimer = setInterval(() => {
         const remaining = endTime - Date.now();
@@ -244,6 +269,10 @@ function showConfirmModal(alarm) {
             // Waktu habis
             clearInterval(confirmModalTimer);
             confirmModalTimer = null;
+            if (confirmReminderInterval) {
+                clearInterval(confirmReminderInterval);
+                confirmReminderInterval = null;
+            }
             if (modal.classList.contains('active') && currentConfirmAlarm && currentConfirmAlarm.id === alarm.id) {
                 modal.classList.remove('active');
                 showNotification(`Waktu konfirmasi untuk ${alarm.activity} telah habis.`, 'warning');
@@ -263,6 +292,23 @@ function showConfirmModal(alarm) {
     renderAlarms();
 }
 
+// Fungsi untuk mengirim notifikasi reminder
+function sendReminderNotification(alarm) {
+    // Notifikasi browser
+    if (Notification.permission === 'granted') {
+        new Notification('⏰ Reminder Kegiatan', {
+            body: `Jangan lupa konfirmasi ${alarm.activity}: ${alarm.note}`,
+            icon: '⏰'
+        });
+    }
+    
+    // Notifikasi toast
+    showNotification(`⏰ Reminder: Konfirmasi ${alarm.activity}`, 'warning');
+    
+    // Suara notifikasi pendek
+    playNotificationSound();
+}
+
 // Menutup modal konfirmasi
 function closeConfirmModal() {
     const modal = document.getElementById('confirmModal');
@@ -270,6 +316,10 @@ function closeConfirmModal() {
     if (confirmModalTimer) {
         clearInterval(confirmModalTimer);
         confirmModalTimer = null;
+    }
+    if (confirmReminderInterval) {
+        clearInterval(confirmReminderInterval);
+        confirmReminderInterval = null;
     }
     if (currentConfirmAlarm) {
         currentConfirmAlarm.reminderActive = false;
@@ -299,12 +349,12 @@ function startAlarmChecker() {
             const alarmTime = new Date(alarm.time);
             const timeDiff = alarmTime - now;
             
-            // Kirim warning 1 menit sebelum alarm (DIUBAH DARI 5 MENIT)
+            // Kirim warning 1 menit sebelum alarm
             if (timeDiff > 0 && timeDiff <= 60000 && !alarm.warningSent) {
                 sendWarning(alarm);
             }
             
-            // Alarm utama
+            // Alarm utama (tepat waktu)
             if (timeDiff <= 0 && timeDiff > -1000 && !alarm.triggered && !alarm.reminderActive) {
                 triggerAlarm(alarm);
             }
@@ -325,7 +375,7 @@ function startAlarmChecker() {
     }, 500);
 }
 
-// Mengirim warning (DIUBAH TEKSNYA)
+// Mengirim warning 1 menit sebelum alarm
 function sendWarning(alarm) {
     alarm.warningSent = true;
     showNotification(`⚠️ 1 menit lagi: ${alarm.activity}!`, 'warning');
@@ -341,11 +391,12 @@ function sendWarning(alarm) {
     saveToLocalStorage();
 }
 
-// Menjalankan alarm
+// Menjalankan alarm (tepat waktu)
 function triggerAlarm(alarm) {
     if (!alarm.triggered && !alarm.completed) {
         alarm.triggered = true;
         
+        // Notifikasi browser
         if (Notification.permission === 'granted') {
             new Notification(`🔔 Alarm ${alarm.activity}`, {
                 body: alarm.note,
@@ -355,7 +406,10 @@ function triggerAlarm(alarm) {
             });
         }
         
+        // Suara dering
         playAlarmRingtone(alarm.id);
+        
+        // Notifikasi toast
         showNotification(`🔔 WAKTUNYA ${alarm.activity}! ${alarm.note}`, 'success');
         
         // Tampilkan modal konfirmasi
@@ -396,22 +450,31 @@ function showNotification(message, type = 'success') {
 
 // Menyimpan ke localStorage
 function saveToLocalStorage() {
-    localStorage.setItem('alarms', JSON.stringify(alarms));
+    try {
+        localStorage.setItem('alarms', JSON.stringify(alarms));
+    } catch (e) {
+        console.error('Gagal menyimpan ke localStorage:', e);
+    }
 }
 
 // Memuat dari localStorage
 function loadAlarms() {
-    const savedAlarms = localStorage.getItem('alarms');
-    if (savedAlarms) {
-        alarms = JSON.parse(savedAlarms);
-        // Migrasi jika properti tidak ada
-        alarms.forEach(alarm => {
-            if (alarm.reminderActive === undefined) alarm.reminderActive = false;
-            if (alarm.reminderEndTime === undefined) alarm.reminderEndTime = null;
-        });
-        renderAlarms();
-        updateProgress();
-    } else {
+    try {
+        const savedAlarms = localStorage.getItem('alarms');
+        if (savedAlarms) {
+            alarms = JSON.parse(savedAlarms);
+            // Migrasi jika properti tidak ada
+            alarms.forEach(alarm => {
+                if (alarm.reminderActive === undefined) alarm.reminderActive = false;
+                if (alarm.reminderEndTime === undefined) alarm.reminderEndTime = null;
+            });
+            renderAlarms();
+            updateProgress();
+        } else {
+            createSampleAlarms();
+        }
+    } catch (e) {
+        console.error('Gagal memuat dari localStorage:', e);
         createSampleAlarms();
     }
 }
@@ -470,7 +533,7 @@ function filterAlarms(filter) {
     renderAlarms();
 }
 
-// Menampilkan daftar alarm (bagian isActive juga diubah menjadi 60000)
+// Menampilkan daftar alarm
 function renderAlarms() {
     const alarmList = document.getElementById('alarmList');
     const now = new Date();
@@ -495,7 +558,6 @@ function renderAlarms() {
     alarmList.innerHTML = sortedAlarms.map(alarm => {
         const alarmTime = new Date(alarm.time);
         const timeDiff = alarmTime - now;
-        // Aktivitas yang akan segera (1 menit) - DIUBAH DARI 300000
         const isActive = timeDiff > 0 && timeDiff <= 60000 && !alarm.completed && !alarm.reminderActive;
         
         let statusClass = '';
