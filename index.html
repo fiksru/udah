@@ -23,8 +23,8 @@
                     <span class="stat-value" id="completedTasks">0</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Terlambat</span>
-                    <span class="stat-value penalty" id="penaltyTasks">0</span>
+                    <span class="stat-label">Pending</span>
+                    <span class="stat-value" id="pendingTasks">0</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-label">Progress</span>
@@ -70,7 +70,6 @@
                 <button class="filter-btn active" onclick="filterAlarms('all')" id="filterAll">Semua</button>
                 <button class="filter-btn" onclick="filterAlarms('pending')" id="filterPending">Pending</button>
                 <button class="filter-btn" onclick="filterAlarms('completed')" id="filterCompleted">Selesai</button>
-                <button class="filter-btn" onclick="filterAlarms('penalty')" id="filterPenalty">Terlambat</button>
             </div>
             
             <ul class="alarm-list" id="alarmList">
@@ -111,13 +110,14 @@
         </div>
     </div>
 
-    <!-- Modal Konfirmasi -->
+    <!-- Modal Konfirmasi Kegiatan -->
     <div class="modal" id="confirmModal">
         <div class="modal-content">
             <h2>⏰ Konfirmasi Kegiatan</h2>
             <p id="confirmMessage">Apakah Anda sudah menyelesaikan kegiatan ini?</p>
+            <p id="confirmTimer" style="color: #ff9800; font-weight: bold;">Sisa waktu: 1:00</p>
             <div class="modal-actions">
-                <button class="btn-cancel" onclick="closeConfirmModal()">Nanti</button>
+                <button class="btn-cancel" onclick="closeConfirmModal()">Tutup</button>
                 <button class="btn-primary" onclick="confirmComplete()">Ya, Selesai</button>
             </div>
         </div>
