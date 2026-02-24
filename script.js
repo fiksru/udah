@@ -3,6 +3,7 @@ let alarms = [];
 let currentFilter = 'all';
 let pendingConfirmAlarm = null;
 let audioContext = null;
+let checkerInterval = null;
 
 // Inisialisasi saat halaman dimuat
 document.addEventListener('DOMContentLoaded', function() {
@@ -11,6 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     updateProgress();
     addAutoAlarmButton();
     initAudio();
+    
+    // Request notification permission
+    if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
+        Notification.requestPermission();
+    }
 });
 
 // Inisialisasi Audio Context
@@ -27,31 +33,11 @@ function playNotificationSound() {
     if (!audioContext) return;
     
     try {
-        // Resume audio context jika suspended
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
         
-        // Buat oscillator untuk suara notifikasi
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        // Konfigurasi suara
-        oscillator.type = 'sine';
-        oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
-        
-        // Envelope suara
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.1);
-        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
-        
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
-        
-        // Ulang 3 kali
+        // Buat suara notifikasi yang lebih jelas
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
                 const osc = audioContext.createOscillator();
@@ -60,14 +46,16 @@ function playNotificationSound() {
                 osc.connect(gain);
                 gain.connect(audioContext.destination);
                 
+                osc.type = 'sine';
                 osc.frequency.value = 600 + (i * 100);
+                
                 gain.gain.setValueAtTime(0, audioContext.currentTime);
                 gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
                 gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
                 
                 osc.start();
                 osc.stop(audioContext.currentTime + 0.3);
-            }, i * 400);
+            }, i * 300);
         }
     } catch (e) {
         console.log('Gagal memainkan suara:', e);
@@ -83,22 +71,24 @@ function playPenaltySound() {
             audioContext.resume();
         }
         
-        // Suara penalty yang lebih rendah
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
+        // Suara penalty yang lebih rendah dan tidak enak didengar
+        const osc = audioContext.createOscillator();
+        const gain = audioContext.createGain();
         
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
+        osc.connect(gain);
+        gain.connect(audioContext.destination);
         
-        oscillator.type = 'sawtooth';
-        oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, audioContext.currentTime);
+        osc.frequency.setValueAtTime(150, audioContext.currentTime + 0.5);
         
-        gainNode.gain.setValueAtTime(0, audioContext.currentTime);
-        gainNode.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.1);
-        gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.8);
+        gain.gain.setValueAtTime(0, audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.1);
+        gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.5);
+        gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1);
         
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.8);
+        osc.start();
+        osc.stop(audioContext.currentTime + 1);
     } catch (e) {
         console.log('Gagal memainkan suara penalty:', e);
     }
@@ -174,8 +164,13 @@ function saveAlarm() {
         completed: false,
         penalty: false,
         warningSent: false,
-        gracePeriodStarted: false,
-        graceEndTime: null,
+        gracePeriod: {
+            active: false,
+            startTime: null,
+            endTime: null,
+            notificationSent: false
+        },
+        triggered: false,
         createdAt: new Date().toISOString()
     };
 
@@ -193,7 +188,7 @@ function deleteAlarm(id) {
     saveToLocalStorage();
     renderAlarms();
     updateProgress();
-    showNotification('Alarm dihapus');
+    showNotification('Alam dihapus');
 }
 
 // Menandai alarm selesai
@@ -202,9 +197,10 @@ function completeAlarm(id) {
     if (alarm) {
         alarm.completed = true;
         alarm.penalty = false;
-        alarm.warningSent = false;
-        alarm.gracePeriodStarted = false;
-        alarm.graceEndTime = null;
+        alarm.gracePeriod.active = false;
+        alarm.gracePeriod.endTime = null;
+        alarm.triggered = false;
+        
         saveToLocalStorage();
         renderAlarms();
         updateProgress();
@@ -217,26 +213,48 @@ function completeAlarm(id) {
 function givePenalty(alarm) {
     alarm.penalty = true;
     alarm.completed = false;
+    alarm.gracePeriod.active = false;
+    alarm.gracePeriod.endTime = null;
     alarm.warningSent = false;
-    alarm.gracePeriodStarted = false;
-    alarm.graceEndTime = null;
+    alarm.triggered = false;
+    
     saveToLocalStorage();
     renderAlarms();
     updateProgress();
     playPenaltySound();
     showNotification(`⚠️ PENALTY: ${alarm.activity} tidak selesai tepat waktu!`, 'error');
+    
+    // Kirim notifikasi penalty
+    if (Notification.permission === 'granted') {
+        new Notification('⚠️ PENALTY!', {
+            body: `${alarm.activity} - Anda terlambat!`,
+            icon: '⚠️'
+        });
+    }
 }
 
 // Memulai grace period
 function startGracePeriod(alarm) {
-    alarm.gracePeriodStarted = true;
-    const graceEnd = new Date();
-    graceEnd.setMinutes(graceEnd.getMinutes() + 5); // 5 menit grace period
-    alarm.graceEndTime = graceEnd.toISOString();
+    const now = new Date();
+    const graceEnd = new Date(now.getTime() + 5 * 60000); // 5 menit dari sekarang
+    
+    alarm.gracePeriod = {
+        active: true,
+        startTime: now.toISOString(),
+        endTime: graceEnd.toISOString(),
+        notificationSent: false
+    };
     
     // Kirim notifikasi grace period
-    showNotification(`⚠️ Waktu keringanan 5 menit untuk ${alarm.activity}!`, 'warning');
+    showNotification(`⚠️ Waktu keringanan 5 menit untuk ${alarm.activity}! Segera selesaikan!`, 'warning');
     playNotificationSound();
+    
+    if (Notification.permission === 'granted') {
+        new Notification('⏰ Masa Keringanan 5 Menit', {
+            body: `${alarm.activity} - Anda memiliki 5 menit untuk menyelesaikan`,
+            icon: '⏰'
+        });
+    }
     
     saveToLocalStorage();
     renderAlarms();
@@ -244,47 +262,75 @@ function startGracePeriod(alarm) {
 
 // Memeriksa alarm yang aktif
 function startAlarmChecker() {
-    setInterval(() => {
+    // Hentikan checker sebelumnya jika ada
+    if (checkerInterval) {
+        clearInterval(checkerInterval);
+    }
+    
+    checkerInterval = setInterval(() => {
         const now = new Date();
         
         alarms.forEach(alarm => {
-            if (!alarm.completed && !alarm.penalty) {
-                const alarmTime = new Date(alarm.time);
-                const timeDiff = alarmTime - now;
-                const timeDiffMinutes = Math.floor(timeDiff / 60000);
+            // Skip jika sudah selesai atau sudah penalty
+            if (alarm.completed || alarm.penalty) return;
+            
+            const alarmTime = new Date(alarm.time);
+            const timeDiff = alarmTime - now;
+            const timeDiffMinutes = Math.floor(timeDiff / 60000);
+            
+            // KIRIM WARNING 5 MENIT SEBELUM ALARM
+            if (timeDiff > 0 && timeDiff <= 300000 && !alarm.warningSent) {
+                sendWarning(alarm);
+            }
+            
+            // ALARM UTAMA (TEPAT WAKTU)
+            if (timeDiff <= 0 && timeDiff > -1000 && !alarm.triggered && !alarm.gracePeriod.active) {
+                triggerAlarm(alarm);
+            }
+            
+            // MULAI GRACE PERIOD (1 DETIK SETELAH ALARM)
+            if (timeDiff < -1000 && !alarm.triggered && !alarm.gracePeriod.active && !alarm.penalty) {
+                startGracePeriod(alarm);
+            }
+            
+            // CEK GRACE PERIOD - INI YANG DIPERBAIKI
+            if (alarm.gracePeriod.active && alarm.gracePeriod.endTime) {
+                const graceEnd = new Date(alarm.gracePeriod.endTime);
                 
-                // Alarm utama (tepat waktu)
-                if (timeDiff <= 0 && timeDiff > -60000 && !alarm.triggered && !alarm.gracePeriodStarted) {
-                    triggerAlarm(alarm);
+                // Kirim notifikasi 1 menit sebelum grace period habis
+                const timeToEnd = graceEnd - now;
+                if (timeToEnd <= 60000 && timeToEnd > 0 && !alarm.gracePeriod.notificationSent) {
+                    alarm.gracePeriod.notificationSent = true;
+                    showNotification(`⏰ 1 menit lagi masa keringanan habis untuk ${alarm.activity}!`, 'warning');
+                    playNotificationSound();
                 }
                 
-                // Grace period (5 menit setelah alarm)
-                if (timeDiff < -60000 && !alarm.gracePeriodStarted && !alarm.warningSent) {
-                    startGracePeriod(alarm);
-                }
-                
-                // Cek grace period
-                if (alarm.gracePeriodStarted && alarm.graceEndTime) {
-                    const graceEnd = new Date(alarm.graceEndTime);
-                    if (now > graceEnd && !alarm.penalty) {
-                        givePenalty(alarm);
-                    }
-                }
-                
-                // Kirim warning 5 menit sebelum alarm
-                if (timeDiff > 0 && timeDiff <= 300000 && !alarm.warningSent) { // 5 menit = 300000 ms
-                    sendWarning(alarm);
+                // JIKA GRACE PERIOD HABIS -> KENAKAN PENALTY
+                if (now >= graceEnd) {
+                    givePenalty(alarm);
                 }
             }
         });
+        
+        // Update render setiap detik untuk menampilkan countdown
+        renderAlarms();
+        
     }, 1000);
 }
 
 // Mengirim warning
 function sendWarning(alarm) {
     alarm.warningSent = true;
-    showNotification(`⚠️ Waktu Keringanan 5 menit warning`);
+    showNotification(`⚠️ waktu keringanan 5 menit : ${alarm.activity}!. Warning!!!`);
     playNotificationSound();
+    
+    if (Notification.permission === 'granted') {
+        new Notification('⏰ Peringatan!', {
+            body: `5 menit lagi ${alarm.activity}`,
+            icon: '⚠️'
+        });
+    }
+    
     saveToLocalStorage();
     renderAlarms();
 }
@@ -299,7 +345,8 @@ function triggerAlarm(alarm) {
             new Notification(`🔔 Alarm ${alarm.activity}`, {
                 body: alarm.note,
                 icon: '🔔',
-                requireInteraction: true
+                requireInteraction: true,
+                silent: false
             });
         }
         
@@ -309,11 +356,12 @@ function triggerAlarm(alarm) {
         // Tampilkan modal konfirmasi
         showConfirmModal(alarm);
         
+        saveToLocalStorage();
         renderAlarms();
     }
 }
 
-// Menampilkan notifikasi
+// Menampilkan notifikasi toast
 function showNotification(message, type = 'success') {
     const colors = {
         success: '#667eea',
@@ -334,6 +382,7 @@ function showNotification(message, type = 'success') {
         z-index: 2000;
         animation: slideIn 0.3s ease;
         max-width: 300px;
+        font-size: 14px;
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
@@ -353,6 +402,19 @@ function loadAlarms() {
     const savedAlarms = localStorage.getItem('alarms');
     if (savedAlarms) {
         alarms = JSON.parse(savedAlarms);
+        
+        // Migrasi data lama ke struktur baru jika perlu
+        alarms.forEach(alarm => {
+            if (!alarm.gracePeriod) {
+                alarm.gracePeriod = {
+                    active: false,
+                    startTime: null,
+                    endTime: null,
+                    notificationSent: false
+                };
+            }
+        });
+        
         renderAlarms();
         updateProgress();
     } else {
@@ -373,7 +435,13 @@ function createSampleAlarms() {
             completed: false,
             penalty: false,
             warningSent: false,
-            gracePeriodStarted: false
+            triggered: false,
+            gracePeriod: {
+                active: false,
+                startTime: null,
+                endTime: null,
+                notificationSent: false
+            }
         },
         {
             id: 2,
@@ -383,7 +451,13 @@ function createSampleAlarms() {
             completed: false,
             penalty: false,
             warningSent: false,
-            gracePeriodStarted: false
+            triggered: false,
+            gracePeriod: {
+                active: false,
+                startTime: null,
+                endTime: null,
+                notificationSent: false
+            }
         },
         {
             id: 3,
@@ -393,7 +467,13 @@ function createSampleAlarms() {
             completed: false,
             penalty: false,
             warningSent: false,
-            gracePeriodStarted: false
+            triggered: false,
+            gracePeriod: {
+                active: false,
+                startTime: null,
+                endTime: null,
+                notificationSent: false
+            }
         }
     ];
     
@@ -440,20 +520,22 @@ function renderAlarms() {
     // Urutkan alarm
     const sortedAlarms = [...filteredAlarms].sort((a, b) => {
         if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        if (a.penalty !== b.penalty) return a.penalty ? -1 : 1;
+        if (a.penalty !== b.penalty) return a.penalty ? 1 : -1;
         return new Date(a.time) - new Date(b.time);
     });
     
     alarmList.innerHTML = sortedAlarms.map(alarm => {
         const alarmTime = new Date(alarm.time);
-        const now = new Date();
         const timeDiff = alarmTime - now;
-        const isActive = timeDiff > 0 && timeDiff <= 300000 && !alarm.completed && !alarm.penalty;
+        const isActive = timeDiff > 0 && timeDiff <= 300000 && !alarm.completed && !alarm.penalty && !alarm.gracePeriod.active;
         const isWarning = timeDiff > 0 && timeDiff <= 300000 && !alarm.warningSent && !alarm.completed && !alarm.penalty;
-        const inGracePeriod = alarm.gracePeriodStarted && !alarm.completed && !alarm.penalty;
         
+        // Cek status grace period
+        const inGracePeriod = alarm.gracePeriod && alarm.gracePeriod.active;
+        let timeRemaining = '';
         let statusClass = '';
         let statusText = '';
+        let statusBadge = '';
         
         if (alarm.completed) {
             statusClass = 'completed';
@@ -461,9 +543,21 @@ function renderAlarms() {
         } else if (alarm.penalty) {
             statusClass = 'penalty';
             statusText = '⚠️ TERLAMBAT (Penalty)';
-        } else if (inGracePeriod) {
-            statusClass = 'warning';
-            statusText = '⏰ Masa Keringanan (5 menit)';
+            statusBadge = 'penalty-badge';
+        } else if (inGracePeriod && alarm.gracePeriod.endTime) {
+            statusClass = 'grace-period';
+            statusText = '⏰ MASA KERINGANAN';
+            statusBadge = 'grace-badge';
+            
+            // Hitung sisa waktu grace period
+            const graceEnd = new Date(alarm.gracePeriod.endTime);
+            const remainingMs = graceEnd - now;
+            
+            if (remainingMs > 0) {
+                const remainingMin = Math.floor(remainingMs / 60000);
+                const remainingSec = Math.floor((remainingMs % 60000) / 1000);
+                timeRemaining = `<span class="timer-countdown">Sisa: ${remainingMin}:${remainingSec.toString().padStart(2, '0')}</span>`;
+            }
         } else if (isActive) {
             statusClass = 'active';
             statusText = '🔔 Aktif';
@@ -474,111 +568,4 @@ function renderAlarms() {
                 <div class="alarm-info">
                     <strong>${getActivityIcon(alarm.activity)} ${alarm.activity}</strong>
                     <small>${formatDate(alarm.time)}</small>
-                    <small style="display: block; color: #666;">${alarm.note}</small>
-                    ${statusText ? `<small class="${alarm.penalty ? 'penalty-badge' : (inGracePeriod ? 'warning-badge' : '')}">${statusText}</small>` : ''}
-                </div>
-                <div class="alarm-actions">
-                    ${!alarm.completed && !alarm.penalty ? `
-                        <button class="btn-complete" onclick="completeAlarm(${alarm.id})">✓ Selesai</button>
-                    ` : ''}
-                    <button class="btn-delete" onclick="deleteAlarm(${alarm.id})">✗ Hapus</button>
-                </div>
-            </li>
-        `;
-    }).join('');
-}
-
-// Update progress
-function updateProgress() {
-    const total = alarms.length;
-    const completed = alarms.filter(a => a.completed).length;
-    const penalty = alarms.filter(a => a.penalty).length;
-    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
-    document.getElementById('totalTasks').textContent = total;
-    document.getElementById('completedTasks').textContent = completed;
-    document.getElementById('penaltyTasks').textContent = penalty;
-    document.getElementById('progressPercentage').textContent = progress + '%';
-    document.getElementById('progressBar').style.width = progress + '%';
-}
-
-// Mendapatkan icon untuk kegiatan
-function getActivityIcon(activity) {
-    const icons = {
-        'Makan': '🍚',
-        'Belajar': '📚',
-        'Tidur': '😴',
-        'Kebugaran': '💪'
-    };
-    return icons[activity] || '⏰';
-}
-
-// Format tanggal
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diff = date - now;
-    
-    if (diff < 86400000 && diff > -86400000) {
-        return `Hari ini, ${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`;
-    } else {
-        return date.toLocaleDateString('id-ID', { 
-            weekday: 'short', 
-            day: 'numeric', 
-            month: 'short',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
-    }
-}
-
-// Membuat alarm otomatis
-function createAutoAlarm() {
-    const activities = ['Makan', 'Belajar', 'Tidur', 'Kebugaran'];
-    const now = new Date();
-    
-    activities.forEach(activity => {
-        const randomMinutes = Math.floor(Math.random() * 60) + 1;
-        const alarmTime = new Date(now.getTime() + randomMinutes * 60000);
-        
-        const alarm = {
-            id: Date.now() + Math.random(),
-            activity: activity,
-            time: alarmTime.toISOString().slice(0, 16),
-            note: `Alarm otomatis: ${activity}`,
-            completed: false,
-            penalty: false,
-            warningSent: false,
-            gracePeriodStarted: false,
-            createdAt: new Date().toISOString(),
-            isAuto: true
-        };
-        
-        alarms.push(alarm);
-    });
-    
-    saveToLocalStorage();
-    renderAlarms();
-    updateProgress();
-    showNotification('4 Alarm otomatis telah ditambahkan!');
-}
-
-// Menambahkan tombol alarm otomatis
-function addAutoAlarmButton() {
-    const alarmSection = document.querySelector('.alarm-section');
-    const autoButton = document.createElement('button');
-    autoButton.className = 'btn-secondary';
-    autoButton.style.marginTop = '10px';
-    autoButton.style.width = '100%';
-    autoButton.textContent = '🤖 Buat Alarm Otomatis (4 Kegiatan)';
-    autoButton.onclick = createAutoAlarm;
-    alarmSection.appendChild(autoButton);
-}
-
-// Meminta izin notifikasi
-if (Notification.permission !== 'granted' && Notification.permission !== 'denied') {
-    Notification.requestPermission();
-}
-
-// Event listener untuk tombol Escape
-
+                    <small style="display: block; color: #
