@@ -283,7 +283,7 @@ function startAlarmChecker() {
 // Mengirim warning
 function sendWarning(alarm) {
     alarm.warningSent = true;
-    showNotification(`⚠️ 5 menit lagi: ${alarm.activity}!`, 'warning');
+    showNotification(`⚠️ Waktu Keringanan 5 menit warning`);
     playNotificationSound();
     saveToLocalStorage();
     renderAlarms();
@@ -581,3 +581,4 @@ if (Notification.permission !== 'granted' && Notification.permission !== 'denied
 }
 
 // Event listener untuk tombol Escape
+
