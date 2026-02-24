@@ -3,6 +3,7 @@ let alarms = [];
 let currentFilter = 'all';
 let audioContext = null;
 let checkerInterval = null;
+let activeAlarmSounds = {}; // Untuk menyimpan audio yang sedang aktif
 
 // Inisialisasi saat halaman dimuat
 document.addEventListener('DOMContentLoaded', function() {
@@ -27,7 +28,100 @@ function initAudio() {
     }
 }
 
-// Memainkan suara notifikasi
+// Memainkan nada dering alarm yang keras dan panjang
+function playAlarmRingtone(alarmId) {
+    if (!audioContext) return;
+    
+    try {
+        // Hentikan suara sebelumnya jika ada
+        stopAlarmRingtone(alarmId);
+        
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
+        const gainNode = audioContext.createGain();
+        gainNode.connect(audioContext.destination);
+        gainNode.gain.setValueAtTime(0.8, audioContext.currentTime); // Volume 80%
+        
+        // Buat oscillator untuk nada dering yang lebih keras
+        const osc1 = audioContext.createOscillator();
+        const osc2 = audioContext.createOscillator();
+        const osc3 = audioContext.createOscillator();
+        
+        osc1.type = 'sawtooth'; // Nada kasar agar lebih terdengar
+        osc2.type = 'square';   // Nada tambahan
+        osc3.type = 'triangle'; // Nada harmoni
+        
+        osc1.frequency.setValueAtTime(880, audioContext.currentTime); // Nada A5
+        osc2.frequency.setValueAtTime(440, audioContext.currentTime); // Nada A4
+        osc3.frequency.setValueAtTime(220, audioContext.currentTime); // Nada A3
+        
+        osc1.connect(gainNode);
+        osc2.connect(gainNode);
+        osc3.connect(gainNode);
+        
+        // Simpan oscillator agar bisa dihentikan nanti
+        activeAlarmSounds[alarmId] = {
+            osc1, osc2, osc3,
+            gainNode,
+            startTime: Date.now()
+        };
+        
+        // Mulai semua oscillator
+        osc1.start();
+        osc2.start();
+        osc3.start();
+        
+        // Buat efek naik turun volume (vibrato)
+        const interval = setInterval(() => {
+            if (!activeAlarmSounds[alarmId]) {
+                clearInterval(interval);
+                return;
+            }
+            
+            const time = audioContext.currentTime;
+            // Efek tremolo (volume naik turun)
+            gainNode.gain.setValueAtTime(
+                0.5 + 0.3 * Math.sin(time * 5), 
+                time
+            );
+            
+            // Efek frekuensi naik turun
+            osc1.frequency.setValueAtTime(
+                880 + 20 * Math.sin(time * 8),
+                time
+            );
+        }, 100);
+        
+        // Simpan interval untuk dibersihkan nanti
+        activeAlarmSounds[alarmId].interval = interval;
+        
+    } catch (e) {
+        console.log('Gagal memainkan nada dering:', e);
+    }
+}
+
+// Menghentikan nada dering alarm
+function stopAlarmRingtone(alarmId) {
+    if (activeAlarmSounds[alarmId]) {
+        try {
+            const sounds = activeAlarmSounds[alarmId];
+            
+            if (sounds.osc1) sounds.osc1.stop();
+            if (sounds.osc2) sounds.osc2.stop();
+            if (sounds.osc3) sounds.osc3.stop();
+            
+            if (sounds.interval) clearInterval(sounds.interval);
+            
+            delete activeAlarmSounds[alarmId];
+        } catch (e) {
+            console.log('Gagal menghentikan nada dering:', e);
+        }
+    }
+}
+
+// Memainkan suara notifikasi pendek
 function playNotificationSound() {
     if (!audioContext) return;
     
@@ -36,7 +130,7 @@ function playNotificationSound() {
             audioContext.resume();
         }
         
-        // Buat suara notifikasi
+        // Suara notifikasi pendek
         for (let i = 0; i < 3; i++) {
             setTimeout(() => {
                 const osc = audioContext.createOscillator();
@@ -46,15 +140,14 @@ function playNotificationSound() {
                 gain.connect(audioContext.destination);
                 
                 osc.type = 'sine';
-                osc.frequency.value = 600 + (i * 100);
+                osc.frequency.value = 800 + (i * 100);
                 
-                gain.gain.setValueAtTime(0, audioContext.currentTime);
-                gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.1);
-                gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+                gain.gain.setValueAtTime(0.5, audioContext.currentTime);
+                gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
                 
                 osc.start();
-                osc.stop(audioContext.currentTime + 0.3);
-            }, i * 300);
+                osc.stop(audioContext.currentTime + 0.2);
+            }, i * 200);
         }
     } catch (e) {
         console.log('Gagal memainkan suara:', e);
@@ -70,7 +163,7 @@ function playPenaltySound() {
             audioContext.resume();
         }
         
-        // Suara penalty
+        // Suara penalty yang lebih rendah dan panjang
         const osc = audioContext.createOscillator();
         const gain = audioContext.createGain();
         
@@ -79,15 +172,14 @@ function playPenaltySound() {
         
         osc.type = 'sawtooth';
         osc.frequency.setValueAtTime(200, audioContext.currentTime);
-        osc.frequency.setValueAtTime(150, audioContext.currentTime + 0.5);
+        osc.frequency.linearRampToValueAtTime(100, audioContext.currentTime + 1.5);
         
-        gain.gain.setValueAtTime(0, audioContext.currentTime);
-        gain.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.1);
-        gain.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.5);
-        gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1);
+        gain.gain.setValueAtTime(0.6, audioContext.currentTime);
+        gain.gain.linearRampToValueAtTime(0.4, audioContext.currentTime + 0.8);
+        gain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.5);
         
         osc.start();
-        osc.stop(audioContext.currentTime + 1);
+        osc.stop(audioContext.currentTime + 1.5);
     } catch (e) {
         console.log('Gagal memainkan suara penalty:', e);
     }
@@ -147,6 +239,7 @@ function saveAlarm() {
             notificationSent: false
         },
         triggered: false,
+        alarmStopped: false, // Untuk menandai apakah alarm sudah dihentikan
         createdAt: new Date().toISOString()
     };
 
@@ -160,6 +253,9 @@ function saveAlarm() {
 
 // Menghapus alarm
 function deleteAlarm(id) {
+    // Hentikan nada dering jika sedang aktif
+    stopAlarmRingtone(id);
+    
     alarms = alarms.filter(alarm => alarm.id !== id);
     saveToLocalStorage();
     renderAlarms();
@@ -171,11 +267,15 @@ function deleteAlarm(id) {
 function completeAlarm(id) {
     const alarm = alarms.find(a => a.id === id);
     if (alarm) {
+        // Hentikan nada dering jika sedang aktif
+        stopAlarmRingtone(id);
+        
         alarm.completed = true;
         alarm.penalty = false;
         alarm.gracePeriod.active = false;
         alarm.gracePeriod.endTime = null;
         alarm.triggered = false;
+        alarm.alarmStopped = true;
         
         saveToLocalStorage();
         renderAlarms();
@@ -187,12 +287,16 @@ function completeAlarm(id) {
 
 // Memberi penalty (terlambat)
 function givePenalty(alarm) {
+    // Hentikan nada dering jika sedang aktif
+    stopAlarmRingtone(alarm.id);
+    
     alarm.penalty = true;
     alarm.completed = false;
     alarm.gracePeriod.active = false;
     alarm.gracePeriod.endTime = null;
     alarm.warningSent = false;
     alarm.triggered = false;
+    alarm.alarmStopped = true;
     
     saveToLocalStorage();
     renderAlarms();
@@ -236,7 +340,7 @@ function startGracePeriod(alarm) {
     renderAlarms();
 }
 
-// Memeriksa alarm yang aktif
+// Memeriksa alarm yang aktif - VERSI DIPERBAIKI
 function startAlarmChecker() {
     // Hentikan checker sebelumnya jika ada
     if (checkerInterval) {
@@ -253,24 +357,25 @@ function startAlarmChecker() {
             
             const alarmTime = new Date(alarm.time);
             const timeDiff = alarmTime - now;
+            const timeDiffSeconds = Math.floor(timeDiff / 1000);
             
             // KIRIM WARNING 5 MENIT SEBELUM ALARM
             if (timeDiff > 0 && timeDiff <= 300000 && !alarm.warningSent && !alarm.penalty) {
                 sendWarning(alarm);
             }
             
-            // ALARM UTAMA (TEPAT WAKTU)
+            // ALARM UTAMA (TEPAT WAKTU) - MAINKAN NADA DERING
             if (timeDiff <= 0 && timeDiff > -1000 && !alarm.triggered && !alarm.gracePeriod.active && !alarm.penalty) {
                 triggerAlarm(alarm);
             }
             
-            // MULAI GRACE PERIOD (1 DETIK SETELAH ALARM) - 1 MENIT
-            if (timeDiff < -1000 && !alarm.triggered && !alarm.gracePeriod.active && !alarm.penalty) {
+            // MULAI GRACE PERIOD (SETELAH ALARM BERBUNYI) - 1 MENIT
+            if (timeDiff < -1000 && alarm.triggered && !alarm.gracePeriod.active && !alarm.penalty && !alarm.completed) {
                 startGracePeriod(alarm);
             }
             
-            // CEK GRACE PERIOD - JIKA HABIS LANGSUNG PENALTY
-            if (alarm.gracePeriod.active && alarm.gracePeriod.endTime && !alarm.penalty) {
+            // CEK GRACE PERIOD - PASTIKAN PENALTY JIKA HABIS
+            if (alarm.gracePeriod.active && alarm.gracePeriod.endTime && !alarm.penalty && !alarm.completed) {
                 const graceEnd = new Date(alarm.gracePeriod.endTime);
                 
                 // Kirim notifikasi 30 detik sebelum grace period habis
@@ -282,17 +387,27 @@ function startAlarmChecker() {
                 }
                 
                 // JIKA GRACE PERIOD HABIS -> KENAKAN PENALTY LANGSUNG
-                if (now >= graceEnd && !alarm.penalty) {
+                if (now >= graceEnd) {
                     givePenalty(alarm);
                     progressUpdated = true;
                 }
             }
             
-            // CEK ALARM YANG SUDAH LEWAT TANPA GRACE PERIOD (JAGA-JAGA)
+            // CEK ALARM YANG SUDAH LEWAT TANPA TRIGGER - FIX BUG
             if (timeDiff < -60000 && !alarm.triggered && !alarm.gracePeriod.active && !alarm.penalty && !alarm.completed) {
-                // Jika sudah lewat lebih dari 1 menit dan tidak dalam grace period, langsung penalty
+                // Jika sudah lewat lebih dari 1 menit dan tidak pernah ditrigger, langsung penalty
+                console.log('Alarm lewat tanpa trigger:', alarm);
                 givePenalty(alarm);
                 progressUpdated = true;
+            }
+            
+            // CEK ALARM YANG SEDANG DALAM GRACE PERIOD TAPI SUDAH LEWAT 1 MENIT
+            if (alarm.gracePeriod.active && alarm.gracePeriod.endTime && !alarm.penalty && !alarm.completed) {
+                const graceEnd = new Date(alarm.gracePeriod.endTime);
+                if (now > graceEnd) {
+                    givePenalty(alarm);
+                    progressUpdated = true;
+                }
             }
         });
         
@@ -302,7 +417,7 @@ function startAlarmChecker() {
             updateProgress();
         }
         
-    }, 1000);
+    }, 500); // Cek setiap 500ms untuk lebih responsif
 }
 
 // Mengirim warning
@@ -322,10 +437,11 @@ function sendWarning(alarm) {
     renderAlarms();
 }
 
-// Menjalankan alarm
+// Menjalankan alarm - MAINKAN NADA DERING
 function triggerAlarm(alarm) {
     if (!alarm.triggered && !alarm.completed && !alarm.penalty) {
         alarm.triggered = true;
+        alarm.alarmStopped = false;
         
         // Notifikasi
         if (Notification.permission === 'granted') {
@@ -333,14 +449,15 @@ function triggerAlarm(alarm) {
                 body: alarm.note,
                 icon: '🔔',
                 requireInteraction: true,
-                silent: false
+                silent: false,
+                vibrate: [200, 100, 200] // Getar untuk mobile
             });
         }
         
-        // Suara
-        playNotificationSound();
+        // Mainkan nada dering alarm (keras dan panjang)
+        playAlarmRingtone(alarm.id);
         
-        // TAMPILKAN NOTIFIKASI SAJA, TANPA POP-UP KONFIRMASI
+        // Tampilkan notifikasi toast
         showNotification(`🔔 WAKTUNYA ${alarm.activity}! ${alarm.note}`, 'success');
         
         saveToLocalStorage();
@@ -370,6 +487,7 @@ function showNotification(message, type = 'success') {
         animation: slideIn 0.3s ease;
         max-width: 300px;
         font-size: 14px;
+        font-weight: bold;
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
@@ -400,6 +518,9 @@ function loadAlarms() {
                     notificationSent: false
                 };
             }
+            if (alarm.alarmStopped === undefined) {
+                alarm.alarmStopped = false;
+            }
         });
         
         renderAlarms();
@@ -423,6 +544,7 @@ function createSampleAlarms() {
             penalty: false,
             warningSent: false,
             triggered: false,
+            alarmStopped: false,
             gracePeriod: {
                 active: false,
                 startTime: null,
@@ -439,6 +561,7 @@ function createSampleAlarms() {
             penalty: false,
             warningSent: false,
             triggered: false,
+            alarmStopped: false,
             gracePeriod: {
                 active: false,
                 startTime: null,
@@ -455,6 +578,7 @@ function createSampleAlarms() {
             penalty: false,
             warningSent: false,
             triggered: false,
+            alarmStopped: false,
             gracePeriod: {
                 active: false,
                 startTime: null,
@@ -532,7 +656,7 @@ function renderAlarms() {
             statusBadge = 'penalty-badge';
         } else if (inGracePeriod && alarm.gracePeriod.endTime) {
             statusClass = 'grace-period';
-            statusText = '⏰ MASA KERINGANAN (1 MENIT)';
+            statusText = '⏰ MASA KERINGANAN';
             statusBadge = 'grace-badge';
             
             // Hitung sisa waktu grace period
@@ -544,11 +668,6 @@ function renderAlarms() {
                 const remainingMin = Math.floor(remainingSec / 60);
                 const remainingSecs = remainingSec % 60;
                 timeRemaining = `<span class="timer-countdown">Sisa: ${remainingMin}:${remainingSecs.toString().padStart(2, '0')}</span>`;
-            } else {
-                // Jika sudah habis, panggil penalty (jaga-jaga)
-                if (!alarm.penalty) {
-                    setTimeout(() => givePenalty(alarm), 100);
-                }
             }
         } else if (isActive) {
             statusClass = 'active';
@@ -637,6 +756,7 @@ function createAutoAlarm() {
             penalty: false,
             warningSent: false,
             triggered: false,
+            alarmStopped: false,
             gracePeriod: {
                 active: false,
                 startTime: null,
@@ -681,4 +801,11 @@ document.addEventListener('click', function(event) {
     if (event.target === modal) {
         closeModal();
     }
+});
+
+// Hentikan semua suara saat halaman ditutup
+window.addEventListener('beforeunload', function() {
+    Object.keys(activeAlarmSounds).forEach(alarmId => {
+        stopAlarmRingtone(alarmId);
+    });
 });
