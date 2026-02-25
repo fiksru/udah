@@ -13,15 +13,7 @@ let pendingRender = false;
 // ====================================================
 // FILE MP3 NADA DERING LOKAL - UBAH DI SINI MANUAL
 // ====================================================
-// Ganti nama file di bawah ini dengan file MP3 yang sudah Anda download
-// Pastikan file MP3 berada di folder yang sama dengan file HTML
-// Biarkan kosong ('') jika ingin menggunakan nada default
-const CUSTOM_RINGTONE_FILE = 'ayam.mp3'; // Contoh: 'nada-dering.mp3'
-
-// Contoh nama file yang bisa digunakan (sesuaikan dengan file Anda):
-// const CUSTOM_RINGTONE_FILE = 'alarm.mp3';
-// const CUSTOM_RINGTONE_FILE = 'ringtone.mp3';
-// const CUSTOM_RINGTONE_FILE = 'notifikasi.mp3';
+const CUSTOM_RINGTONE_FILE = 'ayam.mp3'; // Contoh: 'alarm.mp3'
 // ====================================================
 
 // Inisialisasi
@@ -39,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         Notification.requestPermission();
     }
     
-    // Tampilkan info nada dering yang digunakan (hanya di console)
+    // Tampilkan info nada dering
     if (CUSTOM_RINGTONE_FILE) {
         console.log('Menggunakan nada dering lokal:', CUSTOM_RINGTONE_FILE);
     } else {
@@ -59,7 +51,6 @@ function initAudio() {
 
 // Event Listeners Global
 function addEventListeners() {
-    // Escape key untuk tutup modal
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeModal();
@@ -67,7 +58,6 @@ function addEventListeners() {
         }
     });
 
-    // Klik di luar modal untuk tutup
     document.addEventListener('click', function(e) {
         const alarmModal = document.getElementById('alarmModal');
         const confirmModal = document.getElementById('confirmModal');
@@ -76,14 +66,12 @@ function addEventListeners() {
     });
 }
 
-// Memainkan nada dering alarm (menggunakan file MP3 lokal)
+// Memainkan nada dering alarm
 function playAlarmRingtone(alarmId) {
-    // Jika ada file MP3 lokal, gunakan HTML5 Audio
     if (CUSTOM_RINGTONE_FILE) {
         try {
             stopAlarmRingtone(alarmId);
             
-            // Buat path ke file lokal
             const audioPath = CUSTOM_RINGTONE_FILE;
             console.log('Mencoba memutar file:', audioPath);
             
@@ -91,24 +79,19 @@ function playAlarmRingtone(alarmId) {
             audio.loop = true;
             audio.volume = 0.7;
             
-            // Handle jika file berhasil dimuat
             audio.addEventListener('canplaythrough', () => {
                 console.log('File audio siap diputar');
             });
             
-            // Handle error jika file gagal diputar
             audio.addEventListener('error', (e) => {
                 console.error('Gagal memutar file audio lokal:', e);
-                console.log('Fallback ke nada default');
                 playDefaultRingtone(alarmId);
             });
             
-            // Coba putar audio
             audio.play().then(() => {
                 console.log('Memutar nada dering lokal:', CUSTOM_RINGTONE_FILE);
             }).catch(e => {
                 console.error('Gagal memutar audio lokal:', e);
-                console.log('Fallback ke nada default');
                 playDefaultRingtone(alarmId);
             });
             
@@ -119,11 +102,10 @@ function playAlarmRingtone(alarmId) {
         }
     }
     
-    // Gunakan default ringtone
     playDefaultRingtone(alarmId);
 }
 
-// Nada dering default (Web Audio API)
+// Nada dering default
 function playDefaultRingtone(alarmId) {
     if (!audioContext) return;
     
@@ -154,7 +136,6 @@ function playDefaultRingtone(alarmId) {
         osc1.start();
         osc2.start();
         
-        // Efek naik turun volume
         const interval = setInterval(() => {
             if (!activeAlarmSounds[alarmId]) {
                 clearInterval(interval);
@@ -227,7 +208,6 @@ function playNotificationSound() {
 
 // ==================== FUNGSI MODAL ====================
 
-// Menampilkan modal alarm
 window.showAlarmModal = function(activity = null) {
     console.log('Membuka modal alarm, activity:', activity);
     const modal = document.getElementById('alarmModal');
@@ -241,27 +221,23 @@ window.showAlarmModal = function(activity = null) {
         modalTitle.textContent = 'Atur Alarm Manual';
     }
     
-    // Set default waktu ke sekarang + 1 menit
     const now = new Date();
     now.setMinutes(now.getMinutes() + 1);
     now.setSeconds(0);
     now.setMilliseconds(0);
     document.getElementById('alarmTime').value = now.toISOString().slice(0, 16);
     
-    // Kosongkan catatan
     document.getElementById('alarmNote').value = '';
     
     modal.classList.add('active');
 };
 
-// Menutup modal alarm
 window.closeModal = function() {
     console.log('Menutup modal alarm');
     const modal = document.getElementById('alarmModal');
     modal.classList.remove('active');
 };
 
-// Menutup modal konfirmasi
 window.closeConfirmModal = function() {
     console.log('Menutup modal konfirmasi');
     const modal = document.getElementById('confirmModal');
@@ -287,7 +263,6 @@ window.closeConfirmModal = function() {
 
 // ==================== FUNGSI ALARM ====================
 
-// Menyimpan alarm baru
 window.saveAlarm = function() {
     console.log('Menyimpan alarm...');
     
@@ -300,12 +275,11 @@ window.saveAlarm = function() {
         return;
     }
 
-    // Validasi waktu
     const selectedTime = new Date(alarmTime);
     const now = new Date();
     
     if (selectedTime <= now) {
-        showNotification('Waktu alarm harus di masa depan!', 'warning');
+        showNotification('Waktu alarm harus waktu yang akan datang!');
         return;
     }
 
@@ -314,7 +288,7 @@ window.saveAlarm = function() {
         activity: activity,
         time: alarmTime,
         note: note || `Alarm ${activity}`,
-        status: 'pending', // pending, completed, failed
+        status: 'pending',
         warningSent: false,
         reminderActive: false,
         reminderEndTime: null,
@@ -327,20 +301,16 @@ window.saveAlarm = function() {
     alarms.push(alarm);
     console.log('Alarm ditambahkan:', alarm);
     
-    // Simpan dan update
     saveToLocalStorage();
     updateStats();
     updateFilterCounts();
     debouncedRender();
     
-    // Tutup modal
     closeModal();
     
-    // Notifikasi
     showNotification('Alarm berhasil ditambahkan!', 'success');
 };
 
-// Menghapus alarm
 window.deleteAlarm = function(id) {
     console.log('Menghapus alarm dengan ID:', id);
     stopAlarmRingtone(id);
@@ -355,7 +325,6 @@ window.deleteAlarm = function(id) {
     showNotification('Alarm dihapus', 'success');
 };
 
-// Menandai alarm selesai
 window.completeAlarm = function(id) {
     console.log('Menyelesaikan alarm dengan ID:', id);
     const alarm = alarms.find(a => a.id === id);
@@ -380,7 +349,6 @@ window.completeAlarm = function(id) {
     }
 };
 
-// Menandai alarm tidak terlaksana
 window.failAlarm = function(id) {
     console.log('Menandai alarm tidak terlaksana dengan ID:', id);
     const alarm = alarms.find(a => a.id === id);
@@ -404,12 +372,10 @@ window.failAlarm = function(id) {
     }
 };
 
-// Filter alarm
 window.filterAlarms = function(filter) {
     console.log('Filter alarm:', filter);
     currentFilter = filter;
     
-    // Update active class pada filter buttons
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.classList.remove('active');
     });
@@ -418,51 +384,14 @@ window.filterAlarms = function(filter) {
     debouncedRender();
 };
 
-// Membuat alarm otomatis
-window.createAutoAlarm = function() {
-    console.log('Membuat alarm otomatis...');
-    const activities = ['Makan', 'Belajar', 'Tidur', 'Kebugaran'];
-    const now = new Date();
-    
-    activities.forEach(activity => {
-        const randomMinutes = Math.floor(Math.random() * 30) + 1; // 1-30 menit
-        const alarmTime = new Date(now.getTime() + randomMinutes * 60000);
-        
-        const alarm = {
-            id: Date.now() + Math.random(),
-            activity: activity,
-            time: alarmTime.toISOString().slice(0, 16),
-            note: `Alarm otomatis: ${activity}`,
-            status: 'pending',
-            warningSent: false,
-            triggered: false,
-            reminderActive: false,
-            reminderEndTime: null,
-            failedAt: null,
-            completedAt: null,
-            createdAt: new Date().toISOString()
-        };
-        
-        alarms.push(alarm);
-    });
-    
-    saveToLocalStorage();
-    updateStats();
-    updateFilterCounts();
-    debouncedRender();
-    showNotification('4 Alarm otomatis telah ditambahkan!', 'success');
-};
-
 // ==================== FUNGSI CHECKER ====================
 
-// Memeriksa alarm yang aktif
 function startAlarmChecker() {
     if (checkerInterval) clearInterval(checkerInterval);
     
     checkerInterval = setInterval(() => {
         const now = new Date();
         let needRender = false;
-        let needStatsUpdate = false;
         
         alarms.forEach(alarm => {
             if (alarm.status !== 'pending') return;
@@ -470,19 +399,16 @@ function startAlarmChecker() {
             const alarmTime = new Date(alarm.time);
             const timeDiff = alarmTime - now;
             
-            // Kirim warning 1 menit sebelum alarm
             if (timeDiff > 0 && timeDiff <= 60000 && !alarm.warningSent) {
                 sendWarning(alarm);
                 needRender = true;
             }
             
-            // Alarm utama (tepat waktu)
             if (timeDiff <= 0 && timeDiff > -1000 && !alarm.triggered && !alarm.reminderActive) {
                 triggerAlarm(alarm);
                 needRender = true;
             }
             
-            // Update status untuk reminder yang hampir habis (30 detik)
             if (alarm.reminderActive && alarm.reminderEndTime) {
                 const end = new Date(alarm.reminderEndTime);
                 const remaining = end - now;
@@ -493,24 +419,18 @@ function startAlarmChecker() {
             }
         });
         
-        // Hanya render jika ada perubahan yang signifikan
         if (needRender) {
             debouncedRender();
-        }
-        
-        // Update stats jika ada perubahan
-        if (needRender || needStatsUpdate) {
             updateStats();
             updateFilterCounts();
         }
         
-    }, 1000); // Cek setiap 1 detik
+    }, 1000);
 }
 
-// Mengirim warning 1 menit sebelum alarm
 function sendWarning(alarm) {
     alarm.warningSent = true;
-    showNotification(`⚠️ 1 menit lagi: ${alarm.activity}!`, 'warning');
+    showNotification(`⚠️ 1 menit lagi waktu: ${alarm.activity}!`, 'warning');
     playNotificationSound();
     
     if (Notification.permission === 'granted') {
@@ -523,14 +443,12 @@ function sendWarning(alarm) {
     saveToLocalStorage();
 }
 
-// Menjalankan alarm
 function triggerAlarm(alarm) {
     if (!alarm.triggered && alarm.status === 'pending') {
         alarm.triggered = true;
         
-        // Notifikasi browser
         if (Notification.permission === 'granted') {
-            new Notification(`🔔 Alarm ${alarm.activity}`, {
+            new Notification(`🔔 Memasuki jam ${alarm.activity}, ayu... laksanakan!!`, {
                 body: alarm.note,
                 icon: '🔔',
                 requireInteraction: true,
@@ -538,20 +456,16 @@ function triggerAlarm(alarm) {
             });
         }
         
-        // Suara dering
         playAlarmRingtone(alarm.id);
         
-        // Notifikasi toast
-        showNotification(`🔔 WAKTUNYA ${alarm.activity}! ${alarm.note}`, 'success');
+        showNotification(`🔔 AYUUUU ${alarm.activity}! ${alarm.note}`, 'success');
         
-        // Tampilkan modal konfirmasi dengan 2 pilihan
         showConfirmModal(alarm);
         
         saveToLocalStorage();
     }
 }
 
-// Menampilkan modal konfirmasi dengan 2 pilihan
 function showConfirmModal(alarm) {
     closeConfirmModal();
     
@@ -559,26 +473,22 @@ function showConfirmModal(alarm) {
     const message = document.getElementById('confirmMessage');
     const timerEl = document.getElementById('confirmTimer');
     
-    message.textContent = `Apakah Anda sudah ${alarm.activity}? (${alarm.note})`;
+    message.textContent = `Apakah Kamu sudah ${alarm.activity}? (${alarm.note})`;
     currentConfirmAlarm = alarm;
     
-    // Timer 1 menit
     const endTime = Date.now() + 60000;
     alarm.reminderActive = true;
     alarm.reminderEndTime = new Date(endTime).toISOString();
     alarm.reminderNearEnd = false;
     
-    // Notifikasi pertama
     sendReminderNotification(alarm);
     
-    // Reminder periodik setiap 15 detik
     confirmReminderInterval = setInterval(() => {
         if (currentConfirmAlarm && currentConfirmAlarm.id === alarm.id && alarm.status === 'pending') {
             sendReminderNotification(alarm);
         }
     }, 15000);
     
-    // Update modal footer dengan 2 tombol
     const modalFooter = document.querySelector('#confirmModal .modal-footer');
     if (modalFooter) {
         modalFooter.innerHTML = `
@@ -587,11 +497,9 @@ function showConfirmModal(alarm) {
         `;
     }
     
-    // Update timer setiap detik
     confirmModalTimer = setInterval(() => {
         const remaining = endTime - Date.now();
         if (remaining <= 0) {
-            // Waktu habis, auto-mark sebagai tidak terlaksana
             clearInterval(confirmModalTimer);
             clearInterval(confirmReminderInterval);
             if (modal.classList.contains('active') && currentConfirmAlarm && currentConfirmAlarm.id === alarm.id) {
@@ -605,7 +513,6 @@ function showConfirmModal(alarm) {
             const secs = seconds % 60;
             timerEl.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
             
-            // Update render setiap detik untuk timer
             if (remaining <= 30000) {
                 debouncedRender();
             }
@@ -616,7 +523,6 @@ function showConfirmModal(alarm) {
     debouncedRender();
 }
 
-// Konfirmasi selesai dari modal
 window.confirmComplete = function() {
     console.log('Konfirmasi selesai dari modal');
     if (currentConfirmAlarm) {
@@ -624,7 +530,6 @@ window.confirmComplete = function() {
     }
 };
 
-// Mengirim notifikasi reminder
 function sendReminderNotification(alarm) {
     if (Notification.permission === 'granted') {
         new Notification('⏰ Reminder Kegiatan', {
@@ -636,9 +541,8 @@ function sendReminderNotification(alarm) {
     playNotificationSound();
 }
 
-// ==================== FUNGSI TAMPILAN (DIOPTIMALKAN) ====================
+// ==================== FUNGSI TAMPILAN ====================
 
-// Debounce render untuk mencegah render berlebihan
 function debouncedRender() {
     if (!pendingRender) {
         pendingRender = true;
@@ -649,21 +553,19 @@ function debouncedRender() {
     }
 }
 
-// Menampilkan notifikasi toast
 function showNotification(message, type = 'success') {
     console.log('Notifikasi:', message, type);
     
     const colors = {
-        success: '#667eea',
+        success: '#0066cc',
         warning: '#ff9800',
         error: '#ff4444'
     };
     
-    // Cek apakah sudah ada toast dengan pesan yang sama
     const existingToasts = document.querySelectorAll('.notification-toast');
     for (let toast of existingToasts) {
         if (toast.textContent === message) {
-            return; // Hindari duplikasi notifikasi
+            return;
         }
     }
     
@@ -695,7 +597,6 @@ function showNotification(message, type = 'success') {
     }, 4000);
 }
 
-// Menyimpan ke localStorage
 function saveToLocalStorage() {
     try {
         localStorage.setItem('alarms', JSON.stringify(alarms));
@@ -705,16 +606,13 @@ function saveToLocalStorage() {
     }
 }
 
-// Memuat dari localStorage
 function loadAlarms() {
     try {
         const savedAlarms = localStorage.getItem('alarms');
         if (savedAlarms) {
             alarms = JSON.parse(savedAlarms);
-            // Migrasi data lama
             alarms.forEach(alarm => {
                 if (!alarm.status) {
-                    // Migrasi dari sistem lama
                     if (alarm.completed) {
                         alarm.status = 'completed';
                     } else {
@@ -741,7 +639,6 @@ function loadAlarms() {
     updateFilterCounts();
 }
 
-// Membuat contoh alarm
 function createSampleAlarms() {
     const now = new Date();
     
@@ -778,9 +675,9 @@ function createSampleAlarms() {
         },
         {
             id: 3,
-            activity: 'Kebugaran',
+            activity: 'Organisasi',
             time: new Date(now.getTime() + 8 * 60000).toISOString().slice(0, 16),
-            note: 'Jogging pagi',
+            note: 'Rapat organisasi',
             status: 'pending',
             warningSent: false,
             triggered: false,
@@ -797,12 +694,10 @@ function createSampleAlarms() {
     console.log('Contoh alarm dibuat');
 }
 
-// Render daftar alarm
 function renderAlarms() {
     const alarmList = document.getElementById('alarmList');
     const now = new Date();
     
-    // Filter alarm berdasarkan status
     let filteredAlarms = alarms;
     if (currentFilter === 'pending') {
         filteredAlarms = alarms.filter(a => a.status === 'pending');
@@ -817,7 +712,6 @@ function renderAlarms() {
         return;
     }
     
-    // Urutkan alarm
     const sortedAlarms = [...filteredAlarms].sort((a, b) => {
         if (a.status !== b.status) {
             if (a.status === 'pending') return -1;
@@ -826,7 +720,6 @@ function renderAlarms() {
         return new Date(a.time) - new Date(b.time);
     });
     
-    // Buat HTML string
     let htmlString = '';
     
     sortedAlarms.forEach(alarm => {
@@ -886,47 +779,32 @@ function renderAlarms() {
         `;
     });
     
-    // Update DOM sekali saja
     if (alarmList.innerHTML !== htmlString) {
         alarmList.innerHTML = htmlString;
         console.log('Render daftar alarm');
     }
 }
 
-// Update statistik
 function updateStats() {
     const total = alarms.length;
     const completed = alarms.filter(a => a.status === 'completed').length;
     const failed = alarms.filter(a => a.status === 'failed').length;
-    const pending = alarms.filter(a => a.status === 'pending').length;
     
-    // Progress = completed / total * 100
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     
-    const totalEl = document.getElementById('totalTasks');
-    const completedEl = document.getElementById('completedTasks');
-    const failedEl = document.getElementById('pendingTasks'); // Menggunakan element pending untuk failed
-    const progressEl = document.getElementById('progressPercentage');
-    const progressBar = document.getElementById('progressBar');
+    document.getElementById('totalTasks').textContent = total;
+    document.getElementById('completedTasks').textContent = completed;
     
-    if (totalEl) totalEl.textContent = total;
-    if (completedEl) completedEl.textContent = completed;
+    const failedEl = document.getElementById('failedTasks');
     if (failedEl) {
         failedEl.textContent = failed;
-        // Tambahkan class untuk warna merah
         failedEl.className = 'stat-value ' + (failed > 0 ? 'failed' : '');
     }
-    if (progressEl) progressEl.textContent = progress + '%';
-    if (progressBar) progressBar.style.width = progress + '%';
     
-    // Update label untuk stat pending menjadi tidak terlaksana
-    const statLabel = document.querySelector('.stat-card:nth-child(3) .stat-label');
-    if (statLabel) {
-        statLabel.textContent = 'Tidak Terlaksana';
-    }
+    document.getElementById('progressPercentage').textContent = progress + '%';
+    document.getElementById('progressBar').style.width = progress + '%';
 }
 
-// Update filter counts
 function updateFilterCounts() {
     const total = alarms.length;
     const pending = alarms.filter(a => a.status === 'pending').length;
@@ -944,18 +822,17 @@ function updateFilterCounts() {
     if (countFailed) countFailed.textContent = failed;
 }
 
-// Mendapatkan icon kegiatan
 function getActivityIcon(activity) {
     const icons = {
         'Makan': '🍚',
         'Belajar': '📚',
         'Tidur': '😴',
-        'Kebugaran': '💪'
+        'Kebugaran': '💪',
+        'Organisasi': '🏢'
     };
     return icons[activity] || '⏰';
 }
 
-// Format tanggal
 function formatDate(dateString) {
     const date = new Date(dateString);
     const now = new Date();
@@ -976,7 +853,6 @@ function formatDate(dateString) {
     }
 }
 
-// Hentikan semua suara saat halaman ditutup
 window.addEventListener('beforeunload', function() {
     Object.keys(activeAlarmSounds).forEach(alarmId => {
         stopAlarmRingtone(alarmId);
