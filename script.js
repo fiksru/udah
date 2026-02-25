@@ -7,6 +7,8 @@ let activeAlarmSounds = {};
 let confirmModalTimer = null;
 let confirmReminderInterval = null;
 let currentConfirmAlarm = null;
+let lastRenderTime = 0;
+let pendingRender = false;
 
 // Inisialisasi
 document.addEventListener('DOMContentLoaded', function() {
@@ -206,7 +208,7 @@ window.closeConfirmModal = function() {
         currentConfirmAlarm.reminderActive = false;
         currentConfirmAlarm.reminderEndTime = null;
         currentConfirmAlarm = null;
-        renderAlarms();
+        debouncedRender();
     }
 };
 
@@ -252,9 +254,9 @@ window.saveAlarm = function() {
     
     // Simpan dan update
     saveToLocalStorage();
-    renderAlarms();
     updateStats();
     updateFilterCounts();
+    debouncedRender();
     
     // Tutup modal
     closeModal();
@@ -272,9 +274,9 @@ window.deleteAlarm = function(id) {
     }
     alarms = alarms.filter(alarm => alarm.id !== id);
     saveToLocalStorage();
-    renderAlarms();
     updateStats();
     updateFilterCounts();
+    debouncedRender();
     showNotification('Alarm dihapus', 'success');
 };
 
@@ -290,9 +292,9 @@ window.completeAlarm = function(id) {
         alarm.triggered = false;
         
         saveToLocalStorage();
-        renderAlarms();
         updateStats();
         updateFilterCounts();
+        debouncedRender();
         playNotificationSound();
         showNotification(`Selamat! ${alarm.activity} selesai dikerjakan! 🎉`, 'success');
         
@@ -313,7 +315,7 @@ window.filterAlarms = function(filter) {
     });
     document.getElementById(`filter${filter.charAt(0).toUpperCase() + filter.slice(1)}`).classList.add('active');
     
-    renderAlarms();
+    debouncedRender();
 };
 
 // Membuat alarm otomatis
@@ -343,9 +345,9 @@ window.createAutoAlarm = function() {
     });
     
     saveToLocalStorage();
-    renderAlarms();
     updateStats();
     updateFilterCounts();
+    debouncedRender();
     showNotification('4 Alarm otomatis telah ditambahkan!', 'success');
 };
 
@@ -357,6 +359,8 @@ function startAlarmChecker() {
     
     checkerInterval = setInterval(() => {
         const now = new Date();
+        let needRender = false;
+        let needStatsUpdate = false;
         
         alarms.forEach(alarm => {
             if (alarm.completed) return;
@@ -367,18 +371,38 @@ function startAlarmChecker() {
             // Kirim warning 1 menit sebelum alarm
             if (timeDiff > 0 && timeDiff <= 60000 && !alarm.warningSent) {
                 sendWarning(alarm);
+                needRender = true;
             }
             
             // Alarm utama (tepat waktu)
             if (timeDiff <= 0 && timeDiff > -1000 && !alarm.triggered && !alarm.reminderActive) {
                 triggerAlarm(alarm);
+                needRender = true;
+            }
+            
+            // Update status untuk reminder yang hampir habis (30 detik)
+            if (alarm.reminderActive && alarm.reminderEndTime) {
+                const end = new Date(alarm.reminderEndTime);
+                const remaining = end - now;
+                if (remaining <= 30000 && remaining > 0 && !alarm.reminderNearEnd) {
+                    alarm.reminderNearEnd = true;
+                    needRender = true;
+                }
             }
         });
         
-        // Update tampilan
-        renderAlarms();
+        // Hanya render jika ada perubahan yang signifikan
+        if (needRender) {
+            debouncedRender();
+        }
         
-    }, 500);
+        // Update stats jika ada perubahan
+        if (needRender || needStatsUpdate) {
+            updateStats();
+            updateFilterCounts();
+        }
+        
+    }, 1000); // Cek setiap 1 detik
 }
 
 // Mengirim warning 1 menit sebelum alarm
@@ -440,6 +464,7 @@ function showConfirmModal(alarm) {
     const endTime = Date.now() + 60000;
     alarm.reminderActive = true;
     alarm.reminderEndTime = new Date(endTime).toISOString();
+    alarm.reminderNearEnd = false;
     
     // Notifikasi pertama
     sendReminderNotification(alarm);
@@ -463,19 +488,25 @@ function showConfirmModal(alarm) {
                 showNotification(`Waktu konfirmasi untuk ${alarm.activity} telah habis.`, 'warning');
                 alarm.reminderActive = false;
                 alarm.reminderEndTime = null;
+                alarm.reminderNearEnd = false;
                 currentConfirmAlarm = null;
-                renderAlarms();
+                debouncedRender();
             }
         } else {
             const seconds = Math.floor(remaining / 1000);
             const minutes = Math.floor(seconds / 60);
             const secs = seconds % 60;
             timerEl.textContent = `${minutes}:${secs.toString().padStart(2, '0')}`;
+            
+            // Update render setiap detik untuk timer
+            if (remaining <= 30000) {
+                debouncedRender();
+            }
         }
     }, 1000);
     
     modal.classList.add('active');
-    renderAlarms();
+    debouncedRender();
 }
 
 // Konfirmasi selesai dari modal
@@ -498,7 +529,18 @@ function sendReminderNotification(alarm) {
     playNotificationSound();
 }
 
-// ==================== FUNGSI TAMPILAN ====================
+// ==================== FUNGSI TAMPILAN (DIOPTIMALKAN) ====================
+
+// Debounce render untuk mencegah render berlebihan
+function debouncedRender() {
+    if (!pendingRender) {
+        pendingRender = true;
+        requestAnimationFrame(() => {
+            renderAlarms();
+            pendingRender = false;
+        });
+    }
+}
 
 // Menampilkan notifikasi toast
 function showNotification(message, type = 'success') {
@@ -510,7 +552,16 @@ function showNotification(message, type = 'success') {
         error: '#ff4444'
     };
     
+    // Cek apakah sudah ada toast dengan pesan yang sama
+    const existingToasts = document.querySelectorAll('.notification-toast');
+    for (let toast of existingToasts) {
+        if (toast.textContent === message) {
+            return; // Hindari duplikasi notifikasi
+        }
+    }
+    
     const toast = document.createElement('div');
+    toast.className = 'notification-toast';
     toast.style.cssText = `
         position: fixed;
         top: 20px;
@@ -525,6 +576,7 @@ function showNotification(message, type = 'success') {
         max-width: 300px;
         font-weight: 600;
         font-size: 14px;
+        pointer-events: none;
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
@@ -556,6 +608,7 @@ function loadAlarms() {
             alarms.forEach(alarm => {
                 if (alarm.reminderActive === undefined) alarm.reminderActive = false;
                 if (alarm.reminderEndTime === undefined) alarm.reminderEndTime = null;
+                if (alarm.reminderNearEnd === undefined) alarm.reminderNearEnd = false;
             });
             console.log('Data dimuat:', alarms.length, 'alarm');
         } else {
@@ -566,7 +619,7 @@ function loadAlarms() {
         createSampleAlarms();
     }
     
-    renderAlarms();
+    debouncedRender();
     updateStats();
     updateFilterCounts();
 }
@@ -585,7 +638,8 @@ function createSampleAlarms() {
             warningSent: false,
             triggered: false,
             reminderActive: false,
-            reminderEndTime: null
+            reminderEndTime: null,
+            reminderNearEnd: false
         },
         {
             id: 2,
@@ -596,7 +650,8 @@ function createSampleAlarms() {
             warningSent: false,
             triggered: false,
             reminderActive: false,
-            reminderEndTime: null
+            reminderEndTime: null,
+            reminderNearEnd: false
         },
         {
             id: 3,
@@ -607,7 +662,8 @@ function createSampleAlarms() {
             warningSent: false,
             triggered: false,
             reminderActive: false,
-            reminderEndTime: null
+            reminderEndTime: null,
+            reminderNearEnd: false
         }
     ];
     
@@ -615,11 +671,12 @@ function createSampleAlarms() {
     console.log('Contoh alarm dibuat');
 }
 
-// Render daftar alarm
+// Render daftar alarm (DIOPTIMALKAN)
 function renderAlarms() {
     const alarmList = document.getElementById('alarmList');
     const now = new Date();
     
+    // Filter alarm
     let filteredAlarms = alarms;
     if (currentFilter === 'pending') {
         filteredAlarms = alarms.filter(a => !a.completed);
@@ -638,7 +695,10 @@ function renderAlarms() {
         return new Date(a.time) - new Date(b.time);
     });
     
-    alarmList.innerHTML = sortedAlarms.map(alarm => {
+    // Buat HTML string
+    let htmlString = '';
+    
+    sortedAlarms.forEach(alarm => {
         const alarmTime = new Date(alarm.time);
         const timeDiff = alarmTime - now;
         const isActive = timeDiff > 0 && timeDiff <= 60000 && !alarm.completed && !alarm.reminderActive;
@@ -671,8 +731,8 @@ function renderAlarms() {
             statusText = '🔔 Kurang dari 1 menit';
         }
         
-        return `
-            <li class="alarm-item ${statusClass}">
+        htmlString += `
+            <li class="alarm-item ${statusClass}" data-id="${alarm.id}">
                 <div class="alarm-info">
                     <strong>${getActivityIcon(alarm.activity)} ${alarm.activity}</strong>
                     <small>${formatDate(alarm.time)}</small>
@@ -688,7 +748,13 @@ function renderAlarms() {
                 </div>
             </li>
         `;
-    }).join('');
+    });
+    
+    // Update DOM sekali saja
+    if (alarmList.innerHTML !== htmlString) {
+        alarmList.innerHTML = htmlString;
+        console.log('Render daftar alarm');
+    }
 }
 
 // Update statistik
@@ -698,11 +764,17 @@ function updateStats() {
     const pending = total - completed;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     
-    document.getElementById('totalTasks').textContent = total;
-    document.getElementById('completedTasks').textContent = completed;
-    document.getElementById('pendingTasks').textContent = pending;
-    document.getElementById('progressPercentage').textContent = progress + '%';
-    document.getElementById('progressBar').style.width = progress + '%';
+    const totalEl = document.getElementById('totalTasks');
+    const completedEl = document.getElementById('completedTasks');
+    const pendingEl = document.getElementById('pendingTasks');
+    const progressEl = document.getElementById('progressPercentage');
+    const progressBar = document.getElementById('progressBar');
+    
+    if (totalEl) totalEl.textContent = total;
+    if (completedEl) completedEl.textContent = completed;
+    if (pendingEl) pendingEl.textContent = pending;
+    if (progressEl) progressEl.textContent = progress + '%';
+    if (progressBar) progressBar.style.width = progress + '%';
 }
 
 // Update filter counts
@@ -711,9 +783,13 @@ function updateFilterCounts() {
     const pending = alarms.filter(a => !a.completed).length;
     const completed = alarms.filter(a => a.completed).length;
     
-    document.getElementById('countAll').textContent = total;
-    document.getElementById('countPending').textContent = pending;
-    document.getElementById('countCompleted').textContent = completed;
+    const countAll = document.getElementById('countAll');
+    const countPending = document.getElementById('countPending');
+    const countCompleted = document.getElementById('countCompleted');
+    
+    if (countAll) countAll.textContent = total;
+    if (countPending) countPending.textContent = pending;
+    if (countCompleted) countCompleted.textContent = completed;
 }
 
 // Mendapatkan icon kegiatan
