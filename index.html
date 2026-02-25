@@ -117,6 +117,9 @@
                 <button class="filter-btn" onclick="filterAlarms('completed')" id="filterCompleted">
                     Selesai <span class="filter-count" id="countCompleted">0</span>
                 </button>
+                <button class="filter-btn" onclick="filterAlarms('failed')" id="filterFailed">
+                    Tidak Terlaksana <span class="filter-count" id="countFailed">0</span>
+                </button>
             </div>
             
             <!-- Alarm List -->
@@ -189,6 +192,7 @@
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeConfirmModal()">Tutup</button>
                 <button class="btn-primary" onclick="confirmComplete()">Ya, Selesai</button>
+                <button class="btn-primary" onclick="confirmFailed()">Tidak Terlaksana</button>
             </div>
         </div>
     </div>
@@ -196,3 +200,4 @@
     <script src="script.js"></script>
 </body>
 </html>
+
