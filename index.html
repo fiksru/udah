@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Alarm Kegiatan Harian</title>
+    <title>Master of Time</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="app-container">
-        <!-- Header -->
+        <!-- Header dengan warna biru SNBP -->
         <div class="header">
-            <h1>⏰ Alarm Kegiatan Harian</h1>
-            <p class="subtitle">Atur pengingat untuk kegiatan sehari-hari Anda</p>
+            <h1>⏰ Alarm reminder teman anda</h1>
+            <p class="subtitle">Alarm pengingat untuk kegiatan kamu...</p>
         </div>
 
-        <!-- Progress Section -->
-        <div class="progress-section">
+        <!-- Progress Section dengan background putih transparan -->
+        <div class="progress-section glass-effect">
             <div class="section-title">
-                <h2>📊 Progress Hari Ini</h2>
+                <h2>📊 Progress Kamu:</h2>
             </div>
             
             <div class="stats-grid">
@@ -36,10 +36,10 @@
                     </div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-icon">⏳</div>
+                    <div class="stat-icon">❌</div>
                     <div class="stat-detail">
-                        <span class="stat-label">Pending</span>
-                        <span class="stat-value warning" id="pendingTasks">0</span>
+                        <span class="stat-label">Tidak Terlaksana</span>
+                        <span class="stat-value failed" id="failedTasks">0</span>
                     </div>
                 </div>
                 <div class="stat-card">
@@ -56,8 +56,8 @@
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="quick-actions">
+        <!-- Quick Actions dengan background putih transparan -->
+        <div class="quick-actions glass-effect">
             <div class="section-title">
                 <h2>⚡ Quick Actions</h2>
             </div>
@@ -66,42 +66,50 @@
                     <div class="activity-icon">🍚</div>
                     <div class="activity-info">
                         <h3>Makan</h3>
-                        <span>Atur alarm makan</span>
+                        <span>Klik disini untuk atur alarm makan</span>
                     </div>
                 </button>
                 <button class="activity-card belajar" onclick="showAlarmModal('Belajar')">
                     <div class="activity-icon">📚</div>
                     <div class="activity-info">
                         <h3>Belajar</h3>
-                        <span>Atur alarm belajar</span>
+                        <span>Klik disini untuk atur alarm belajar</span>
                     </div>
                 </button>
                 <button class="activity-card tidur" onclick="showAlarmModal('Tidur')">
                     <div class="activity-icon">😴</div>
                     <div class="activity-info">
                         <h3>Tidur</h3>
-                        <span>Atur alarm tidur</span>
+                        <span>Klik disini untuk atur alarm tidur</span>
                     </div>
                 </button>
                 <button class="activity-card kebugaran" onclick="showAlarmModal('Kebugaran')">
                     <div class="activity-icon">💪</div>
                     <div class="activity-info">
                         <h3>Kebugaran</h3>
-                        <span>Atur alarm olahraga</span>
+                        <span>Klik disini untuk atur alarm olahraga</span>
+                    </div>
+                </button>
+                <!-- Button Organisasi Baru -->
+                <button class="activity-card organisasi" onclick="showAlarmModal('Organisasi')">
+                    <div class="activity-icon">🏢</div>
+                    <div class="activity-info">
+                        <h3>Organisasi</h3>
+                        <span>Klik disini untuk atur alarm organisasi</span>
                     </div>
                 </button>
             </div>
         </div>
 
-        <!-- Alarm List Section -->
-        <div class="alarm-section">
+        <!-- Alarm List Section dengan background putih transparan -->
+        <div class="alarm-section glass-effect">
             <div class="section-header">
                 <div class="section-title">
                     <h2>📋 Daftar Alarm</h2>
                 </div>
                 <div class="header-actions">
                     <button class="btn-secondary" onclick="showAlarmModal()">
-                        <span>+</span> Tambah Manual
+                        <span>+</span> Tambahkan secara Manual
                     </button>
                 </div>
             </div>
@@ -128,11 +136,6 @@
                     <!-- Alarm akan ditampilkan di sini -->
                 </ul>
             </div>
-
-            <!-- Auto Alarm Button -->
-            <button class="btn-auto" onclick="createAutoAlarm()">
-                <span>🤖</span> Buat Alarm Otomatis (4 Kegiatan)
-            </button>
         </div>
     </div>
 
@@ -152,6 +155,7 @@
                         <option value="Belajar">📚 Belajar</option>
                         <option value="Tidur">😴 Tidur</option>
                         <option value="Kebugaran">💪 Kebugaran</option>
+                        <option value="Organisasi">🏢 Organisasi</option>
                     </select>
                 </div>
 
@@ -162,7 +166,7 @@
 
                 <div class="form-group">
                     <label for="alarmNote">Catatan (Opsional)</label>
-                    <input type="text" id="alarmNote" class="form-control" placeholder="Contoh: Sarapan pagi...">
+                    <input type="text" id="alarmNote" class="form-control" placeholder="Contoh: Rapat organisasi...">
                 </div>
             </div>
 
@@ -190,9 +194,7 @@
             </div>
 
             <div class="modal-footer">
-                <button class="btn-cancel" onclick="closeConfirmModal()">Tutup</button>
-                <button class="btn-primary" onclick="confirmComplete()">Ya, Selesai</button>
-                <button class="btn-primary" onclick="confirmFailed()">Tidak Terlaksana</button>
+                <!-- Akan diisi oleh JavaScript -->
             </div>
         </div>
     </div>
@@ -200,4 +202,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
