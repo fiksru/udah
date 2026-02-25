@@ -714,3 +714,41 @@ body {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--gray-500);
 }
+
+/* Badge untuk status tidak terlaksana */
+.badge-failed {
+    background: #ff4444;
+    color: white;
+}
+
+/* Button untuk tidak terlaksana */
+.btn-fail {
+    background: #ff9800;
+    color: white;
+}
+
+.btn-fail:hover {
+    background: #f57c00;
+}
+
+/* Warna untuk statistik failed */
+.stat-value.failed {
+    color: #ff4444;
+}
+
+/* Item alarm dengan status failed */
+.alarm-item.failed {
+    background: #ffebee;
+    border-left-color: #ff4444;
+}
+
+/* Filter button untuk failed */
+#filterFailed {
+    background: #fff3e0;
+}
+
+#filterFailed.active {
+    background: #ff9800;
+    color: white;
+    border-color: #ff9800;
+}
