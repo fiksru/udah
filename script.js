@@ -279,7 +279,7 @@ window.saveAlarm = function() {
     const now = new Date();
     
     if (selectedTime <= now) {
-        showNotification('Waktu alarm harus waktu yang akan datang!');
+        showNotification('Waktu alarm hanya waktu yang akan datang', 'warning');
         return;
     }
 
@@ -430,7 +430,7 @@ function startAlarmChecker() {
 
 function sendWarning(alarm) {
     alarm.warningSent = true;
-    showNotification(`⚠️ 1 menit lagi waktu: ${alarm.activity}!`, 'warning');
+    showNotification(`⚠️ 1 menit lagi: ${alarm.activity}!`, 'warning');
     playNotificationSound();
     
     if (Notification.permission === 'granted') {
@@ -448,7 +448,7 @@ function triggerAlarm(alarm) {
         alarm.triggered = true;
         
         if (Notification.permission === 'granted') {
-            new Notification(`🔔 Memasuki jam ${alarm.activity}, ayu... laksanakan!!`, {
+            new Notification(`🔔 Alarm ${alarm.activity}`, {
                 body: alarm.note,
                 icon: '🔔',
                 requireInteraction: true,
@@ -458,7 +458,7 @@ function triggerAlarm(alarm) {
         
         playAlarmRingtone(alarm.id);
         
-        showNotification(`🔔 AYUUUU ${alarm.activity}! ${alarm.note}`, 'success');
+        showNotification(`🔔 SUDAH WAKTUNYA ${alarm.activity}! ${alarm.note}, ayuu laksanakan`, 'success');
         
         showConfirmModal(alarm);
         
@@ -533,7 +533,7 @@ window.confirmComplete = function() {
 function sendReminderNotification(alarm) {
     if (Notification.permission === 'granted') {
         new Notification('⏰ Reminder Kegiatan', {
-            body: `Jangan lupa konfirmasi ${alarm.activity}: ${alarm.note}`,
+            body: `Jangan lupa konfirmasi yah... ${alarm.activity}: ${alarm.note}`,
             icon: '⏰'
         });
     }
