@@ -10,117 +10,112 @@ let currentConfirmAlarm = null;
 let lastRenderTime = 0;
 let pendingRender = false;
 
-// URL nada dering kustom (bisa diubah oleh user)
-let customRingtoneUrl = ''; // Kosong berarti menggunakan nada default
+// ====================================================
+// FILE MP3 NADA DERING LOKAL - UBAH DI SINI MANUAL
+// ====================================================
+// Ganti nama file di bawah ini dengan file MP3 yang sudah Anda download
+// Pastikan file MP3 berada di folder yang sama dengan file HTML
+// Biarkan kosong ('') jika ingin menggunakan nada default
+const CUSTOM_RINGTONE_FILE = 'ayam.mp3'; // Contoh: 'nada-dering.mp3'
+
+// Contoh nama file yang bisa digunakan (sesuaikan dengan file Anda):
+// const CUSTOM_RINGTONE_FILE = 'alarm.mp3';
+// const CUSTOM_RINGTONE_FILE = 'ringtone.mp3';
+// const CUSTOM_RINGTONE_FILE = 'notifikasi.mp3';
+// ====================================================
 
 // Inisialisasi
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Aplikasi Alarm dimulai...');
     initAudio();
     loadAlarms();
-    loadSettings();
     startAlarmChecker();
     updateStats();
     updateFilterCounts();
     addEventListeners();
-    addRingtoneSelector();
     
     // Request notifikasi
     if (Notification.permission === 'default') {
         Notification.requestPermission();
     }
+    
+    // Tampilkan info nada dering yang digunakan (hanya di console)
+    if (CUSTOM_RINGTONE_FILE) {
+        console.log('Menggunakan nada dering lokal:', CUSTOM_RINGTONE_FILE);
+    } else {
+        console.log('Menggunakan nada dering default');
+    }
 });
 
-// Memuat pengaturan dari localStorage
-function loadSettings() {
+// Inisialisasi Audio
+function initAudio() {
     try {
-        const savedRingtone = localStorage.getItem('customRingtone');
-        if (savedRingtone) {
-            customRingtoneUrl = savedRingtone;
-        }
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log('Audio siap');
     } catch (e) {
-        console.error('Gagal memuat pengaturan:', e);
+        console.log('Web Audio API tidak didukung');
     }
 }
 
-// Menambahkan selector nada dering
-function addRingtoneSelector() {
-    const alarmSection = document.querySelector('.alarm-section');
-    
-    const ringtoneContainer = document.createElement('div');
-    ringtoneContainer.className = 'ringtone-container';
-    ringtoneContainer.style.cssText = `
-        margin-top: 15px;
-        padding: 15px;
-        background: #f0f4f8;
-        border-radius: 10px;
-    `;
-    
-    ringtoneContainer.innerHTML = `
-        <h4 style="margin-bottom: 10px; color: #333;">🎵 Pengaturan Nada Dering</h4>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <input type="text" id="ringtoneUrl" class="form-control" 
-                placeholder="Masukkan URL audio (MP3/WAV)" 
-                value="${customRingtoneUrl}" style="flex: 1;">
-            <button class="btn-secondary" onclick="saveRingtone()">Simpan Nada</button>
-            <button class="btn-secondary" onclick="testRingtone()">Test Nada</button>
-            <button class="btn-secondary" onclick="resetRingtone()">Reset Default</button>
-        </div>
-        <small style="color: #666; display: block; margin-top: 5px;">
-            Contoh URL: https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3
-        </small>
-    `;
-    
-    alarmSection.appendChild(ringtoneContainer);
+// Event Listeners Global
+function addEventListeners() {
+    // Escape key untuk tutup modal
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeModal();
+            closeConfirmModal();
+        }
+    });
+
+    // Klik di luar modal untuk tutup
+    document.addEventListener('click', function(e) {
+        const alarmModal = document.getElementById('alarmModal');
+        const confirmModal = document.getElementById('confirmModal');
+        if (e.target === alarmModal) closeModal();
+        if (e.target === confirmModal) closeConfirmModal();
+    });
 }
 
-// Menyimpan nada dering kustom
-window.saveRingtone = function() {
-    const url = document.getElementById('ringtoneUrl').value.trim();
-    if (url) {
-        customRingtoneUrl = url;
-        localStorage.setItem('customRingtone', url);
-        showNotification('Nada dering berhasil disimpan!', 'success');
-    } else {
-        customRingtoneUrl = '';
-        localStorage.removeItem('customRingtone');
-        showNotification('Nada dering direset ke default', 'success');
-    }
-};
-
-// Test nada dering
-window.testRingtone = function() {
-    playAlarmRingtone('test');
-    setTimeout(() => stopAlarmRingtone('test'), 5000);
-};
-
-// Reset nada dering ke default
-window.resetRingtone = function() {
-    customRingtoneUrl = '';
-    localStorage.removeItem('customRingtone');
-    document.getElementById('ringtoneUrl').value = '';
-    showNotification('Nada dering direset ke default', 'success');
-};
-
-// Memainkan nada dering alarm (dengan dukungan URL kustom)
+// Memainkan nada dering alarm (menggunakan file MP3 lokal)
 function playAlarmRingtone(alarmId) {
-    // Jika ada URL kustom, gunakan HTML5 Audio
-    if (customRingtoneUrl) {
+    // Jika ada file MP3 lokal, gunakan HTML5 Audio
+    if (CUSTOM_RINGTONE_FILE) {
         try {
             stopAlarmRingtone(alarmId);
             
-            const audio = new Audio(customRingtoneUrl);
+            // Buat path ke file lokal
+            const audioPath = CUSTOM_RINGTONE_FILE;
+            console.log('Mencoba memutar file:', audioPath);
+            
+            const audio = new Audio(audioPath);
             audio.loop = true;
             audio.volume = 0.7;
-            audio.play().catch(e => {
-                console.log('Gagal memutar audio kustom, menggunakan default:', e);
+            
+            // Handle jika file berhasil dimuat
+            audio.addEventListener('canplaythrough', () => {
+                console.log('File audio siap diputar');
+            });
+            
+            // Handle error jika file gagal diputar
+            audio.addEventListener('error', (e) => {
+                console.error('Gagal memutar file audio lokal:', e);
+                console.log('Fallback ke nada default');
+                playDefaultRingtone(alarmId);
+            });
+            
+            // Coba putar audio
+            audio.play().then(() => {
+                console.log('Memutar nada dering lokal:', CUSTOM_RINGTONE_FILE);
+            }).catch(e => {
+                console.error('Gagal memutar audio lokal:', e);
+                console.log('Fallback ke nada default');
                 playDefaultRingtone(alarmId);
             });
             
             activeAlarmSounds[alarmId] = { audio, type: 'html5' };
             return;
         } catch (e) {
-            console.log('Error dengan audio kustom, menggunakan default:', e);
+            console.error('Error dengan audio lokal:', e);
         }
     }
     
@@ -200,35 +195,6 @@ function stopAlarmRingtone(alarmId) {
             console.log('Gagal menghentikan nada dering:', e);
         }
     }
-}
-
-// Inisialisasi Audio
-function initAudio() {
-    try {
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        console.log('Audio siap');
-    } catch (e) {
-        console.log('Web Audio API tidak didukung');
-    }
-}
-
-// Event Listeners Global
-function addEventListeners() {
-    // Escape key untuk tutup modal
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeModal();
-            closeConfirmModal();
-        }
-    });
-
-    // Klik di luar modal untuk tutup
-    document.addEventListener('click', function(e) {
-        const alarmModal = document.getElementById('alarmModal');
-        const confirmModal = document.getElementById('confirmModal');
-        if (e.target === alarmModal) closeModal();
-        if (e.target === confirmModal) closeConfirmModal();
-    });
 }
 
 // Suara notifikasi pendek
@@ -970,27 +936,12 @@ function updateFilterCounts() {
     const countAll = document.getElementById('countAll');
     const countPending = document.getElementById('countPending');
     const countCompleted = document.getElementById('countCompleted');
+    const countFailed = document.getElementById('countFailed');
     
     if (countAll) countAll.textContent = total;
     if (countPending) countPending.textContent = pending;
     if (countCompleted) countCompleted.textContent = completed;
-    
-    // Tambahkan filter untuk failed jika belum ada
-    const filterFailed = document.getElementById('filterFailed');
-    if (!filterFailed) {
-        const filterSection = document.querySelector('.filter-section');
-        if (filterSection) {
-            const failedBtn = document.createElement('button');
-            failedBtn.className = 'filter-btn';
-            failedBtn.id = 'filterFailed';
-            failedBtn.setAttribute('onclick', "filterAlarms('failed')");
-            failedBtn.innerHTML = `Tidak Terlaksana <span class="filter-count" id="countFailed">${failed}</span>`;
-            filterSection.appendChild(failedBtn);
-        }
-    } else {
-        const countFailed = document.getElementById('countFailed');
-        if (countFailed) countFailed.textContent = failed;
-    }
+    if (countFailed) countFailed.textContent = failed;
 }
 
 // Mendapatkan icon kegiatan
