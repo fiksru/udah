@@ -1,6 +1,6 @@
 /* Reset dan Variabel */
 :root {
-    --primary-snbp: #0066cc; /* Warna biru SNBP */
+    --primary-snbp: #0066cc;
     --primary-dark: #004999;
     --secondary: #4a4a4a;
     --success: #4ecdc4;
@@ -11,9 +11,9 @@
     --glass-border: rgba(255, 255, 255, 0.2);
     --text-light: #ffffff;
     --text-dark: #333333;
-    --shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.2);
-    --radius: 12px;
-    --radius-sm: 8px;
+    --shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+    --radius: 10px;
+    --radius-sm: 6px;
 }
 
 * {
@@ -26,10 +26,10 @@
 body {
     background: #000000;
     min-height: 100vh;
-    padding: 15px;
+    padding: 10px;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* Ubah dari center ke flex-start */
     background-image: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
 }
 
@@ -43,7 +43,7 @@ body {
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(10px);
     }
     to {
         opacity: 1;
@@ -51,88 +51,91 @@ body {
     }
 }
 
-/* Glass Effect untuk background putih transparan */
+/* Glass Effect */
 .glass-effect {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
     border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    margin-bottom: 8px; /* DIPERKECIL dari 20px menjadi 8px */
-    padding: 15px; /* DIPERKECIL dari 25px menjadi 15px */
+    margin-bottom: 4px; /* Jarak antar section sangat kecil */
+    padding: 12px; /* Padding lebih kecil */
 }
 
-/* Header dengan warna biru SNBP */
+/* Header */
 .header {
     background: var(--primary-snbp);
     color: white;
-    padding: 20px; /* DIPERKECIL dari 30px menjadi 20px */
+    padding: 15px 12px; /* Padding horizontal lebih kecil */
     border-radius: var(--radius);
-    margin-bottom: 8px; /* DIPERKECIL dari 20px menjadi 8px */
+    margin-bottom: 4px; /* Jarak sangat kecil */
     text-align: center;
     box-shadow: var(--shadow);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .header h1 {
-    font-size: 1.8em; /* DIPERKECIL dari 2.2em */
-    margin-bottom: 5px; /* DIPERKECIL dari 10px */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    font-size: 1.5em; /* Lebih kecil */
+    margin-bottom: 3px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    line-height: 1.2;
 }
 
 .header .subtitle {
-    font-size: 0.9em; /* DIPERKECIL dari 1em */
+    font-size: 0.8em;
     opacity: 0.9;
+    line-height: 1.2;
 }
 
 /* Section Title */
 .section-title {
-    margin-bottom: 12px; /* DIPERKECIL dari 20px */
+    margin-bottom: 8px; /* Jarak sangat kecil */
 }
 
 .section-title h2 {
-    font-size: 1.2em; /* DIPERKECIL dari 1.3em */
+    font-size: 1.1em;
     color: var(--text-dark);
     display: flex;
     align-items: center;
-    gap: 6px; /* DIPERKECIL dari 8px */
+    gap: 4px;
+    font-weight: 600;
 }
 
 /* Progress Section */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 8px; /* DIPERKECIL dari 15px */
-    margin-bottom: 12px; /* DIPERKECIL dari 20px */
+    gap: 4px; /* Gap sangat kecil */
+    margin-bottom: 8px; /* Jarak sangat kecil */
 }
 
 .stat-card {
     background: white;
-    padding: 10px; /* DIPERKECIL dari 15px */
+    padding: 8px 6px; /* Padding sangat kecil */
     border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
-    gap: 8px; /* DIPERKECIL dari 12px */
-    transition: transform 0.3s, box-shadow 0.3s;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* DIPERKECIL shadow */
+    gap: 6px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .stat-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
-    font-size: 1.6em; /* DIPERKECIL dari 2em */
+    font-size: 1.3em;
     background: var(--primary-snbp);
     color: white;
-    width: 40px; /* DIPERKECIL dari 50px */
-    height: 40px; /* DIPERKECIL dari 50px */
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px; /* DIPERKECIL dari 12px */
+    border-radius: 8px;
 }
 
 .stat-detail {
@@ -140,253 +143,249 @@ body {
 }
 
 .stat-label {
-    font-size: 0.7em; /* DIPERKECIL dari 0.8em */
+    font-size: 0.6em;
     color: #666;
     display: block;
-    margin-bottom: 2px; /* DIPERKECIL dari 4px */
+    margin-bottom: 1px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
 }
 
 .stat-value {
-    font-size: 1.3em; /* DIPERKECIL dari 1.5em */
+    font-size: 1.1em;
     font-weight: bold;
     color: var(--text-dark);
-}
-
-.stat-value.success {
-    color: #38a169;
-}
-
-.stat-value.failed {
-    color: var(--failed);
+    line-height: 1.2;
 }
 
 .progress-bar-container {
     width: 100%;
-    height: 8px; /* DIPERKECIL dari 10px */
+    height: 6px; /* Lebih tipis */
     background: #e0e0e0;
-    border-radius: 4px;
+    border-radius: 3px;
     overflow: hidden;
 }
 
 .progress-bar {
     height: 100%;
     background: linear-gradient(90deg, var(--primary-snbp), #4ecdc4);
-    border-radius: 4px;
-    transition: width 0.5s ease;
+    border-radius: 3px;
+    transition: width 0.3s ease;
 }
 
 /* Quick Actions */
-.quick-actions {
-    margin-bottom: 8px; /* Tambahkan margin bottom */
-}
-
 .button-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px; /* DIPERKECIL dari 15px */
+    gap: 4px; /* Gap sangat kecil */
 }
 
 .activity-card {
     background: white;
     border: none;
     border-radius: var(--radius-sm);
-    padding: 12px; /* DIPERKECIL dari 20px */
+    padding: 8px; /* Padding sangat kecil */
     display: flex;
     align-items: center;
-    gap: 8px; /* DIPERKECIL dari 15px */
+    gap: 6px;
     cursor: pointer;
-    transition: all 0.3s;
+    transition: all 0.2s;
     text-align: left;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .activity-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.activity-card.makan { background: linear-gradient(135deg, #ff6b6b, #ff8e8e); }
-.activity-card.belajar { background: linear-gradient(135deg, #4ecdc4, #45b7af); }
-.activity-card.tidur { background: linear-gradient(135deg, #a8e6cf, #8ed9b0); }
-.activity-card.kebugaran { background: linear-gradient(135deg, #ffd93d, #f6c90e); }
-.activity-card.organisasi { background: linear-gradient(135deg, #667eea, #764ba2); }
-
 .activity-card .activity-icon {
-    font-size: 1.8em; /* DIPERKECIL dari 2.2em */
+    font-size: 1.5em;
     background: rgba(255, 255, 255, 0.3);
-    width: 40px; /* DIPERKECIL dari 50px */
-    height: 40px; /* DIPERKECIL dari 50px */
+    width: 32px;
+    height: 32px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 10px; /* DIPERKECIL dari 12px */
-}
-
-.activity-card .activity-info {
-    flex: 1;
+    border-radius: 8px;
 }
 
 .activity-card .activity-info h3 {
     color: white;
-    margin-bottom: 2px; /* DIPERKECIL dari 4px */
-    font-size: 1em; /* DIPERKECIL dari 1.1em */
+    font-size: 0.9em;
+    margin-bottom: 1px;
+    font-weight: 600;
+    line-height: 1.2;
 }
 
 .activity-card .activity-info span {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 0.7em; /* DIPERKECIL dari 0.8em */
+    font-size: 0.6em;
+    display: block;
+    line-height: 1.2;
 }
 
 /* Alarm Section */
-.alarm-section {
-    margin-top: 0; /* HILANGKAN margin top */
-}
-
 .section-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px; /* DIPERKECIL dari 20px */
+    margin-bottom: 8px; /* Jarak sangat kecil */
     flex-wrap: wrap;
-    gap: 8px; /* DIPERKECIL dari 15px */
+    gap: 4px;
 }
 
-.header-actions {
-    display: flex;
-    gap: 8px; /* DIPERKECIL dari 10px */
-}
-
-.btn-secondary {
+.header-actions .btn-secondary {
     background: var(--primary-snbp);
     color: white;
     border: none;
-    border-radius: 20px;
-    padding: 6px 12px; /* DIPERKECIL dari 8px 16px */
-    font-size: 0.8em; /* DIPERKECIL dari 0.9em */
+    border-radius: 16px;
+    padding: 4px 10px; /* Padding sangat kecil */
+    font-size: 0.75em;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: background 0.2s;
     display: flex;
     align-items: center;
-    gap: 4px; /* DIPERKECIL dari 5px */
-}
-
-.btn-secondary:hover {
-    background: var(--primary-dark);
+    gap: 3px;
 }
 
 /* Filter Section */
 .filter-section {
     display: flex;
-    gap: 6px; /* DIPERKECIL dari 10px */
-    margin-bottom: 12px; /* DIPERKECIL dari 20px */
+    gap: 3px; /* Gap sangat kecil */
+    margin-bottom: 8px; /* Jarak sangat kecil */
     flex-wrap: wrap;
 }
 
 .filter-btn {
-    padding: 5px 12px; /* DIPERKECIL dari 8px 16px */
-    border: 1px solid rgba(0, 102, 204, 0.3);
+    padding: 4px 8px; /* Padding sangat kecil */
+    border: 1px solid rgba(0, 102, 204, 0.2);
     background: white;
-    border-radius: 20px;
+    border-radius: 16px;
     cursor: pointer;
-    font-size: 0.8em; /* DIPERKECIL dari 0.9em */
-    transition: all 0.3s;
+    font-size: 0.7em;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 4px; /* DIPERKECIL dari 5px */
+    gap: 3px;
     color: var(--text-dark);
+    font-weight: 500;
+}
+
+.filter-btn.active {
+    background: var(--primary-snbp);
+    color: white;
+    border-color: var(--primary-snbp);
 }
 
 .filter-count {
     background: rgba(0, 102, 204, 0.1);
-    padding: 2px 5px; /* DIPERKECIL dari 2px 6px */
-    border-radius: 10px;
-    font-size: 0.7em; /* DIPERKECIL dari 0.8em */
+    padding: 1px 4px;
+    border-radius: 8px;
+    font-size: 0.65em;
+}
+
+.filter-btn.active .filter-count {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Alarm List */
 .alarm-list-container {
-    max-height: 300px; /* DIPERKECIL dari 350px */
+    max-height: 280px;
     overflow-y: auto;
     border-radius: var(--radius-sm);
 }
 
-.alarm-list {
-    list-style: none;
-}
-
 .alarm-item {
     background: white;
-    margin-bottom: 6px; /* DIPERKECIL dari 10px */
-    padding: 12px; /* DIPERKECIL dari 15px */
+    margin-bottom: 3px; /* Jarak antar alarm sangat kecil */
+    padding: 8px; /* Padding sangat kecil */
     border-radius: var(--radius-sm);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    animation: slideIn 0.3s ease;
-    border-left: 3px solid transparent; /* DIPERKECIL dari 4px */
-    transition: transform 0.3s;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.2s ease;
+    border-left: 3px solid transparent;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .alarm-item:hover {
-    transform: translateX(3px); /* DIPERKECIL dari 5px */
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .alarm-info strong {
-    font-size: 1em; /* DIPERKECIL dari 1.1em */
+    font-size: 0.9em;
     color: var(--text-dark);
     display: block;
-    margin-bottom: 3px; /* DIPERKECIL dari 5px */
+    margin-bottom: 2px;
 }
 
 .alarm-info small {
     color: #666;
-    font-size: 0.8em; /* DIPERKECIL dari 0.85em */
+    font-size: 0.7em;
     display: block;
-    margin-top: 2px; /* DIPERKECIL dari 3px */
+    margin-top: 1px;
+    line-height: 1.2;
 }
 
 .alarm-badge {
     display: inline-block;
-    padding: 2px 8px; /* DIPERKECIL dari 3px 10px */
-    border-radius: 10px; /* DIPERKECIL dari 12px */
-    font-size: 0.7em; /* DIPERKECIL dari 0.75em */
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.65em;
     font-weight: 600;
-    margin-top: 3px; /* DIPERKECIL dari 5px */
+    margin-top: 2px;
 }
 
 .timer-countdown {
     display: inline-block;
-    margin-left: 8px; /* DIPERKECIL dari 10px */
+    margin-left: 6px;
     color: #ff9800;
     font-weight: 600;
-    font-size: 0.75em; /* DIPERKECIL dari 0.85em */
+    font-size: 0.7em;
 }
 
 .alarm-actions {
     display: flex;
-    gap: 5px; /* DIPERKECIL dari 8px */
+    gap: 3px;
 }
 
 .alarm-actions button {
-    padding: 4px 8px; /* DIPERKECIL dari 6px 12px */
+    padding: 3px 6px; /* Padding sangat kecil */
     border: none;
-    border-radius: 12px; /* DIPERKECIL dari 15px */
+    border-radius: 10px;
     cursor: pointer;
-    font-size: 0.75em; /* DIPERKECIL dari 0.85em */
-    transition: all 0.3s;
+    font-size: 0.65em;
+    transition: all 0.2s;
     font-weight: 600;
+}
+
+.btn-complete {
+    background: var(--success);
+    color: white;
+}
+
+.btn-fail {
+    background: var(--failed);
+    color: white;
+}
+
+.btn-delete {
+    background: var(--danger);
+    color: white;
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
     color: #999;
-    padding: 30px 15px; /* DIPERKECIL padding */
+    padding: 20px 10px; /* Padding lebih kecil */
     font-style: italic;
     background: white;
     border-radius: var(--radius-sm);
+    font-size: 0.85em;
 }
 
 /* Modal */
@@ -394,137 +393,160 @@ body {
     background: white;
     border-radius: var(--radius);
     width: 90%;
-    max-width: 400px; /* DIPERKECIL dari 450px */
-    max-height: 85vh;
+    max-width: 380px;
+    max-height: 80vh;
     overflow-y: auto;
     box-shadow: var(--shadow);
 }
 
 .modal-header {
-    padding: 15px 20px; /* DIPERKECIL dari 20px 25px */
+    padding: 12px 15px;
 }
 
 .modal-header h2 {
-    font-size: 1.2em; /* DIPERKECIL dari 1.3em */
+    font-size: 1.1em;
+}
+
+.modal-close {
+    font-size: 1.5em;
 }
 
 .modal-body {
-    padding: 20px; /* DIPERKECIL dari 25px */
+    padding: 15px;
 }
 
 .modal-footer {
-    padding: 15px 20px; /* DIPERKECIL dari 20px 25px */
-    gap: 8px; /* DIPERKECIL dari 10px */
+    padding: 12px 15px;
+    gap: 6px;
 }
 
 /* Form Controls */
 .form-group {
-    margin-bottom: 15px; /* DIPERKECIL dari 20px */
+    margin-bottom: 12px;
 }
 
 .form-group label {
-    margin-bottom: 5px; /* DIPERKECIL dari 8px */
-    font-size: 0.85em; /* DIPERKECIL dari 0.9em */
+    margin-bottom: 4px;
+    font-size: 0.8em;
 }
 
 .form-control {
-    padding: 10px 12px; /* DIPERKECIL dari 12px 15px */
-    font-size: 0.9em; /* DIPERKECIL dari 1em */
+    padding: 8px 10px;
+    font-size: 0.85em;
+    border-width: 1px;
+}
+
+/* Buttons */
+.btn-primary, .btn-cancel {
+    padding: 6px 15px;
+    font-size: 0.85em;
+    border-radius: 16px;
 }
 
 /* Confirm Modal */
 .confirm-message {
-    font-size: 1em; /* DIPERKECIL dari 1.1em */
-    margin-bottom: 15px; /* DIPERKECIL dari 20px */
+    font-size: 0.95em;
+    margin-bottom: 12px;
 }
 
 .timer-container {
-    padding: 12px; /* DIPERKECIL dari 15px */
+    padding: 10px;
+}
+
+.timer-label {
+    font-size: 0.8em;
+    margin-bottom: 3px;
 }
 
 .timer-value {
-    font-size: 1.8em; /* DIPERKECIL dari 2em */
+    font-size: 1.6em;
 }
 
 /* Responsive */
 @media (max-width: 600px) {
     body {
-        padding: 10px; /* DIPERKECIL dari 15px */
+        padding: 5px; /* Padding body sangat kecil */
     }
     
     .header {
-        padding: 15px; /* DIPERKECIL dari 20px */
+        padding: 12px 10px;
     }
     
     .header h1 {
-        font-size: 1.5em; /* DIPERKECIL dari 1.8em */
+        font-size: 1.3em;
+    }
+    
+    .glass-effect {
+        padding: 10px;
     }
     
     .stats-grid {
-        gap: 5px; /* DIPERKECIL dari 8px */
+        gap: 3px;
     }
     
     .stat-card {
-        padding: 8px; /* DIPERKECIL dari 10px */
+        padding: 6px 4px;
+        gap: 4px;
     }
     
     .stat-icon {
-        width: 30px; /* DIPERKECIL dari 40px */
-        height: 30px; /* DIPERKECIL dari 40px */
-        font-size: 1.3em; /* DIPERKECIL dari 1.6em */
+        width: 28px;
+        height: 28px;
+        font-size: 1.1em;
     }
     
     .stat-value {
-        font-size: 1.1em; /* DIPERKECIL dari 1.3em */
+        font-size: 1em;
     }
     
     .button-grid {
-        gap: 5px; /* DIPERKECIL dari 8px */
+        gap: 3px;
     }
     
     .activity-card {
-        padding: 10px; /* DIPERKECIL dari 12px */
+        padding: 6px;
+        gap: 4px;
     }
     
     .activity-card .activity-icon {
-        width: 30px; /* DIPERKECIL dari 40px */
-        height: 30px; /* DIPERKECIL dari 40px */
-        font-size: 1.4em; /* DIPERKECIL dari 1.8em */
-    }
-    
-    .activity-card .activity-info h3 {
-        font-size: 0.9em; /* DIPERKECIL dari 1em */
+        width: 28px;
+        height: 28px;
+        font-size: 1.3em;
     }
     
     .filter-section {
-        gap: 4px; /* DIPERKECIL dari 6px */
+        gap: 2px;
     }
     
     .filter-btn {
-        padding: 4px 8px; /* DIPERKECIL dari 5px 12px */
-        font-size: 0.7em; /* DIPERKECIL dari 0.8em */
+        padding: 3px 6px;
+        font-size: 0.65em;
     }
     
     .alarm-item {
-        padding: 10px; /* DIPERKECIL dari 12px */
+        padding: 6px;
+    }
+    
+    .alarm-info strong {
+        font-size: 0.85em;
+    }
+    
+    .alarm-info small {
+        font-size: 0.65em;
     }
     
     .alarm-actions button {
-        padding: 3px 6px; /* DIPERKECIL dari 4px 8px */
-        font-size: 0.7em; /* DIPERKECIL dari 0.75em */
+        padding: 2px 5px;
+        font-size: 0.6em;
     }
 }
 
-/* Scrollbar Styling */
+/* Scrollbar */
 ::-webkit-scrollbar {
-    width: 5px; /* DIPERKECIL dari 8px */
-}
-
-::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    width: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
     background: var(--primary-snbp);
-    border-radius: 3px; /* DIPERKECIL dari 4px */
+    border-radius: 2px;
 }
